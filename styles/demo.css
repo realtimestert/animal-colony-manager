@@ -1,15 +1,25 @@
-/* Demo-only chrome. Does not change the colony UI theme. */
+/* Demo-only chrome. Does not replace styles/style.css. */
+
 .demo-banner {
-  background: #cbcbd4;
-  border: 1px solid #8aa8a1;
-  border-radius: 8px;
-  padding: 0.6rem 0.9rem;
-  margin: 0 0 1rem;
-  font-size: 0.9rem;
+  background: #122754;
+  color: #cbcbd4;
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+.demo-banner code {
+  color: #ee7b30;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.25rem;
+}
+.demo-banner .btn-link {
+  color: #8aa8a1;
+  text-decoration: underline;
 }
 [data-theme="dark"] .demo-banner,
 [data-bs-theme="dark"] .demo-banner {
-  background: #1b2a4a;
+  background: #0b1733;
   color: #cbcbd4;
-  border-color: #8aa8a1;
 }

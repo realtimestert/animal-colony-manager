@@ -1,0 +1,79 @@
+/* SanusBio | styles/nav.css
+   Hamburger + collapsed sidebar. Desktop keeps the full side nav. */
+
+#mobileMenuToggle {
+  display: none;
+}
+
+@media (min-width: 700px) {
+  #mobileMenuToggle {
+    display: none !important;
+  }
+}
+
+@media (max-width: 701px) {
+  #app {
+    flex-direction: column !important;
+  }
+
+  #sidebar {
+    width: 100% !important;
+    min-height: 0 !important;
+    position: relative;
+    z-index: 1030;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  #sidebar .brand {
+    position: relative;
+    padding: 1rem;
+    padding-right: 3.5rem;
+  }
+
+  #mobileMenuToggle {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    right: 0.6rem;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #fff !important;
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 1040;
+    pointer-events: auto;
+  }
+
+  #mobileMenuToggle:hover,
+  #mobileMenuToggle:focus {
+    background: rgba(255, 255, 255, 0.12);
+    outline: none;
+  }
+
+  #sidebar > .nav,
+  #sidebar > #navLinks,
+  #sidebar > .user-block {
+    display: none !important;
+  }
+
+  #sidebar.open > .nav,
+  #sidebar.open > #navLinks {
+    display: flex !important;
+    flex-direction: column !important;
+    padding-bottom: 0.5rem;
+  }
+
+  #sidebar.open > .user-block {
+    display: block !important;
+  }
+}

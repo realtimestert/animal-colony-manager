@@ -1,55 +1,46 @@
 # Animal Colony Manager
 
-A **static, click-through demo** of colony-management software for a ferret research facility.
+Static, click-through demo of a research-animal colony manager. The live product is a Node + MySQL app used to track a ferret research colony (identity, housing, lighting, breeding, genetics, medical care, and reports). This repository is a **trimmed public snapshot** so the interface can be opened on GitHub Pages with no server.
 
-Open it on GitHub Pages (no server, no database). You are signed in as a demo admin. Edits stay in this browser (`localStorage`) until you hit **Reset demo data**.
+**Live demo:** [realtimestert.github.io/animal-colony-manager](https://realtimestert.github.io/animal-colony-manager/)
 
-**Repo:** [github.com/realtimestert/animal-colony-manager](https://github.com/realtimestert/animal-colony-manager)
-
-**Live demo** (after Pages is enabled on `main` / root):
-[https://realtimestert.github.io/animal-colony-manager/](https://realtimestert.github.io/animal-colony-manager/)
-
-This is a trimmed public showcase. It is not the production application and it does not contain live animal records.
-
-## Try this
-
-- Auto-login is **demo admin**. If you see the sign-in card: username `demo`, password `demo`.
-- Dashboard → Find by RFID → `31010` (Nova).
-- Statistics → genetics: Maple × Birch offspring sit near **F = 0.25** (full-sib parents).
-- Litters: staged nests (newborn / soft-food / wean / scored).
-- **Reset demo data** in the sidebar restores the seed colony.
+All animals, rooms, RFID chips, litters, and medical rows are fictional. Writes stay in this browser (`localStorage`). Use **Reset demo data** to restore the seed.
 
 ## What you can click through
 
-- **Dashboard** — colony counts, find-by-name, find-by-RFID (last 5+ digits), reproductive board, weight and grooming alerts, maternity tasks, vaccines due
-- **Ferrets** — active / research / pending / distributed / deceased cards and full detail tabs
-- **Litters + maternity** — staged litters, care checklist, wean / create individuals, separate kits
-- **Genetics** — coefficient of inbreeding and relatedness on Statistics
-- **Medical + death log** — health events, vaccinations, structured death records
-- **Statistics + Reports** — population, pyramid, reproduction, deaths, infant mortality
-- **Batch Care** — baths, nail trims, vaccinations for several animals at once
+- Dashboard, including Find by name and Find by RFID (try last-5 `31010`)
+- Ferret cards and every tab on an individual animal
+- Litters and the maternity path (nursing → soft-food → wean/chip → 6-month survival)
+- Genetics / coefficient of inbreeding (Wright’s path method in the browser)
+- Medical log, death log, and veterinarian communication notes
+- Statistics and printable reports
+- Batch Care plus grooming / vaccination alerts
 
-## How the demo runs
+Sign-in is automatic as a demo admin (`demo` / `demo` if you sign out).
 
-GitHub Pages can only host static files. The production app is a Node + MySQL SPA; this repo keeps the UI and replaces `/api/*` with an in-browser mock:
+## How this demo runs
 
-1. `js/seed.js` defines `window.ACM_SEED` (fictional colony).
-2. `js/mock-api.js` wraps `window.fetch` and answers `/api` calls from that seed.
-3. Writes persist in `localStorage` under `acm_demo_store`.
-4. **Reset demo data** restores the fictional colony.
+There is no Express server and no MySQL on Pages. `js/mock-api.js` intercepts `fetch('/api/...')` and serves `js/seed.js` (`window.ACM_SEED`) from `localStorage`. Coefficient of inbreeding is computed with `js/genetics.js` (`window.SanusGenetics`).
 
-Serve the folder (or use Pages). You do not need Docker or MySQL.
+Open `index.html` locally or enable GitHub Pages on `main` (root).
 
-To turn on Pages: repo **Settings → Pages → Deploy from a branch → `main` / `/` (root)**.
+## Seed colony (short)
 
-## Mock colony
+28 fictional ferrets across three generations.
 
-Fictional names and rooms only. Three-generation pedigree so inbreeding coefficients are not all zero. Example RFID: type `31010` to find Nova. Photos are placeholders.
+| Animal | Role |
+| --- | --- |
+| Cedar, Pine, Willow, Hazel, Ivy | Sourced founders |
+| Maple + Birch | Full siblings (Willow × Cedar) |
+| LIT0004 kits (Rowan–Yarrow) | Inbred F ≈ 25% because the parents are full siblings |
+| LIT0003 kits | Outbred wean/chip litter |
+| Reed | On-site research |
+| Ash | Pending off-site distribution |
+| Sable | Distributed |
+| Fern | Died while listed as mated (last 7 days) |
 
-## What was left out on purpose
-
-Users admin, activity log, bug-report inbox, cleaning reports, suppliers, locations page, emergency-vet stub, Smartsheet importers, farm backup scripts, and any live records.
+Staged litters: LIT0001 nursing (2 days), LIT0002 soft-food (21 days), LIT0003 wean/chip (42 days), LIT0004 scored 6-month survival (197 days).
 
 ## License
 
-MIT — see [LICENSE](LICENSE). The production colony application remains separate and is not published here.
+MIT. This demo is source-available so people can see the work. It is **not** the production farm database and does not include live animal records, import scripts, or operational host configuration.

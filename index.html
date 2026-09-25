@@ -1,0 +1,3010 @@
+<!-- Animal Colony Manager — public static demo (GitHub Pages) -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Animal Colony Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/theme.css">
+  <link rel="stylesheet" href="styles/nav.css">
+  <link rel="stylesheet" href="styles/larger.css">
+  <link rel="stylesheet" href="styles/demo.css">
+  <script src="js/theme.js"></script>
+  <script src="js/toggleMobileNav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+  <!-- LOGIN -->
+  <div id="loginWrap">
+    <div id="loginCard" class="card">
+      <div class="card-body p-4">
+        <div class="text-center mb-4">
+          <img src="img/favicon.svg" style="width:48px;height:48px;" alt="Animal Colony Manager">
+          <h1 class="h5 fw-bold mb-0">Animal Colony Manager</h1>
+          <small class="text-muted">Research colony demo · ferrets</small>
+        </div>
+        <div id="loginErr" class="alert alert-danger py-2 d-none small"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Username</label>
+          <input id="iUser" type="text" class="form-control" placeholder="Enter username" autocomplete="username">
+        </div>
+        <div class="mb-3"><label class="form-label fw-semibold">Password</label>
+          <input id="iPass" type="password" class="form-control" placeholder="Enter password"
+            autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary w-100 fw-semibold" onclick="doLogin()">Sign In</button>
+        <p class="text-muted small text-center mt-3 mb-0">Auto-login as admin. Manual login: <code>demo</code> / <code>demo</code></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP SHELL -->
+  <div id="app" style="display:flex">
+    <div id="sidebar" class="d-flex flex-column">
+      <div class="brand">
+        Colony Mgr
+        <button type="button" id="mobileMenuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks" onclick="return toggleMobileNav(event)">
+          <i class="bi bi-list" id="mobileMenuIcon"></i>
+        </button>
+      </div>
+      <nav class="nav flex-column pt-2 px-1 gap-1" id="navLinks">
+        <a class="nav-link" href="#" data-page="dashboard"><i class="bi bi-speedometer2"></i>Dashboard</a>
+        <a class="nav-link" href="#" data-page="ferrets"><i class="bi bi-grid-3x3-gap"></i>Ferrets</a>
+        <a class="nav-link hide-cleaner" href="#" data-page="batch-care"><i class="bi bi-ui-checks"></i>Batch Care</a>
+        <a class="nav-link" href="#" data-page="litters"><i class="bi bi-egg"></i>Litters</a>
+        <a class="nav-link admin-research-maternity-only" href="#" data-page="reports"><i class="bi bi-file-earmark-bar-graph"></i>Reports</a>
+        <a class="nav-link admin-research-maternity-only" href="#" data-page="statistics"><i class="bi bi-bar-chart-line"></i>Statistics</a>
+      </nav>
+      <div class="user-block">
+        <div id="userInfo" class="mb-2"></div>
+        <button
+          id="darkModeToggle"
+          type="button"
+          class="btn btn-sm w-100 mb-2 dark-mode-btn"
+          onclick="return toggleTheme(event)"
+        >
+          <i class="bi bi-moon-fill"></i>
+          <span>Dark Mode</span>
+        </button>
+        <button class="btn btn-sm btn-outline-light w-100 mb-2" onclick="window.ACM && ACM.resetDemo && ACM.resetDemo()">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Reset demo data
+        </button>
+        <button class="btn btn-sm btn-outline-light w-100" onclick="doLogout()"><i
+            class="bi bi-box-arrow-right me-1"></i>Sign Out</button>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <div class="demo-banner" role="status">
+        <strong>Interactive demo.</strong>
+        Fictional colony · data lives in this browser ·
+        <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="window.ACM && ACM.resetDemo && ACM.resetDemo()">reset to seed</button>.
+        Try RFID last-5: <code>31010</code> (Nova)
+      </div>
+
+      <!-- Dashboard -->
+      <div id="page-dashboard" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+        </div>
+        <div id="statCards" class="row g-3 mb-4"></div>
+
+        <!-- Ferret Lookup (all roles except cleaner) -->
+        <div class="row g-3 mb-4 hide-cleaner" id="dashLookupRow">
+          <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body p-4">
+                <label class="fw-bold fs-6 d-block mb-1"><i class="bi bi-search me-1 text-primary"></i>Find Ferret by Name</label>
+                <p class="text-muted small mb-2">Search by ferret name or animal ID.</p>
+                <div class="input-group">
+                  <input id="dashNameLookupInput" class="form-control" placeholder="Ferret name or animal ID"
+                    autocomplete="off" onkeydown="if(event.key==='Enter') doDashNameLookup()">
+                  <button class="btn btn-primary" onclick="doDashNameLookup()"><i class="bi bi-search me-1"></i>Look Up</button>
+                </div>
+                <div id="dashNameLookupResult" class="mt-3"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body p-4">
+                <label class="fw-bold fs-6 d-block mb-1"><i class="bi bi-broadcast me-1 text-primary"></i>Find Ferret by RFID</label>
+                <p class="text-muted small mb-2">Enter the <strong>last 5 or 6 digits</strong> of the RFID chip, or scan.</p>
+                <div id="dashNfcStatusBanner" class="alert alert-info py-2 small mb-2 d-none"></div>
+                <div class="input-group mb-2">
+                  <input id="dashRfidLookupInput" class="form-control font-monospace" placeholder="e.g. C4D5E"
+                    maxlength="15" autocomplete="off" onkeydown="if(event.key==='Enter') doDashRfidLookup()">
+                  <button class="btn btn-primary" onclick="doDashRfidLookup()"><i class="bi bi-search me-1"></i>Look Up</button>
+                </div>
+                <div id="dashNfcScanWrap" class="d-none mb-2">
+                  <div class="d-flex align-items-center gap-3">
+                    <button id="dashNfcScanBtn" class="btn btn-outline-primary btn-sm" onclick="toggleDashNfcScan()">
+                      <i class="bi bi-broadcast me-1"></i>Start NFC Scan
+                    </button>
+                    <span id="dashNfcScanStatus" class="text-muted small"></span>
+                  </div>
+                </div>
+                <div id="dashRfidLookupResult"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estrus / Reproductive Status Board -->
+        <div class="card" id="dashEstrusCard" style="display:none">
+          <div class="card-header bg-white d-flex align-items-center py-3" role="button"
+               data-bs-toggle="collapse" data-bs-target="#dashEstrusBody" aria-expanded="true"
+               onclick="toggleDashCollapse('dashEstrusBody', this)">
+            <span class="fw-semibold"><i class="bi bi-heart-fill text-danger me-2"></i>Female Reproductive Status
+              Board</span>
+            <span class="text-muted small ms-2">(females with active status)</span>
+            <span class="badge bg-secondary ms-2" id="dashEstrusCount"></span>
+            <i class="bi bi-chevron-up ms-auto text-muted dash-collapse-icon"></i>
+          </div>
+          <div id="dashEstrusBody" class="collapse show">
+            <div class="px-3 pt-3 pb-1 d-flex flex-wrap gap-2" id="dashReproFilterBtns"></div>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Female</th>
+                    <th>Status</th>
+                    <th>Since</th>
+                    <th>Days</th>
+                    <th>Expected Litter</th>
+                    <th>Location</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="dashEstrusList"></tbody>
+              </table>
+            </div>
+            <div class="card-footer bg-white text-muted small py-2">
+              <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>
+              Females in estrus for 8+ days are highlighted — aim to mate within 10 days of estrus onset. Littered rows drop off 4 months after the litter.
+            </div>
+          </div>
+        </div>
+
+        <!-- Died While Active on Board -->
+        <div class="card mt-3" id="dashDiedOnBoardCard" style="display:none">
+          <div class="card-header bg-white d-flex align-items-center py-3">
+            <span class="fw-semibold"><i class="bi bi-heartbreak text-danger me-2"></i>Died While Active on Reproductive Status Board</span>
+            <span class="text-muted small ms-2">Shown for 7 days after death</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr><th>Female</th><th>Status at Death</th><th>Death Date</th><th>Location</th></tr></thead>
+              <tbody id="dashDiedOnBoardList"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Weight & Grooming Care Alerts -->
+        <div class="card mt-3 hide-cleaner" id="dashCareCard" style="display:none">
+          <div class="card-header bg-white d-flex align-items-center py-3 gap-2">
+            <div class="d-flex align-items-center flex-grow-1" role="button"
+                 data-bs-toggle="collapse" data-bs-target="#dashCareBody" aria-expanded="true"
+                 onclick="toggleDashCollapse('dashCareBody', this)">
+              <span class="fw-semibold"><i class="bi bi-clipboard2-pulse text-primary me-2"></i>Weight &amp; Grooming Alerts</span>
+              <span class="text-muted small ms-2">(needs weighing, nail trim, or a checked bath)</span>
+              <span class="badge bg-secondary ms-2" id="dashCareCount"></span>
+              <i class="bi bi-chevron-up ms-auto text-muted dash-collapse-icon"></i>
+            </div>
+            <select id="dashCareSort" class="form-select form-select-sm" style="max-width:170px" onchange="event.stopPropagation(); setDashCareSort(this.value)">
+              <option value="urgency">Sort: Most Urgent</option>
+              <option value="name">Sort: Name</option>
+              <option value="location">Sort: Location</option>
+            </select>
+            <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); printCareAlerts()" title="Print current weight and grooming alerts">
+              <i class="bi bi-printer me-1"></i>Print
+            </button>
+            <button class="btn btn-sm btn-outline-secondary admin-research-only" onclick="event.stopPropagation(); openCareScheduleModal()">
+              <i class="bi bi-gear me-1"></i>Schedule Settings
+            </button>
+          </div>
+          <div id="dashCareBody" class="collapse show">
+            <div class="px-3 pt-3 pb-1 d-flex flex-wrap gap-2" id="dashCareFilterBtns"></div>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead><tr><th>Ferret</th><th>Weight</th><th>Nail Trim</th><th>Bath</th><th>Location</th></tr></thead>
+                <tbody id="dashCareList"></tbody>
+              </table>
+            </div>
+            <div class="card-footer bg-white text-muted small py-2" id="dashCareFooter"></div>
+          </div>
+        </div>
+
+        <!-- Active Litters / Maternity Tasks -->
+        <div class="card mt-3 hide-cleaner" id="dashLittersCard" style="display:none">
+          <div class="card-header bg-white d-flex align-items-center py-3 gap-2">
+            <div class="d-flex align-items-center flex-grow-1" role="button"
+                 data-bs-toggle="collapse" data-bs-target="#dashLittersBody" aria-expanded="true"
+                 onclick="toggleDashCollapse('dashLittersBody', this)">
+              <span class="fw-semibold"><i class="bi bi-egg-fill text-success me-2"></i>Active Litters &amp; Maternity Tasks</span>
+              <span class="text-muted small ms-2">(nest change, soft food, wean/chip, weigh)</span>
+              <span class="badge bg-secondary ms-2" id="dashLittersCount"></span>
+              <i class="bi bi-chevron-up ms-auto text-muted dash-collapse-icon"></i>
+            </div>
+            <a class="btn btn-sm btn-outline-secondary" href="#" onclick="event.preventDefault(); event.stopPropagation(); printMaternityTasks()" title="Print daily/weekly maternity task sheet">
+              <i class="bi bi-printer me-1"></i>Print Tasks
+            </a>
+          </div>
+          <div id="dashLittersBody" class="collapse show">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Litter</th>
+                    <th>Age</th>
+                    <th>Jill</th>
+                    <th>Kits</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Feed start</th>
+                    <th>Wean/chip</th>
+                    <th>Next Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="dashLittersList"></tbody>
+              </table>
+            </div>
+            <div class="card-footer bg-white text-muted small py-2" id="dashLittersFooter"></div>
+          </div>
+        </div>
+
+        <!-- Females — Weeks into Dark -->
+        <div class="card mt-3 hide-cleaner" id="dashDarkInFCard" style="display:none">
+          <div class="card-header bg-white d-flex align-items-center py-3" role="button"
+               data-bs-toggle="collapse" data-bs-target="#dashDarkInFBody" aria-expanded="true"
+               onclick="toggleDashCollapse('dashDarkInFBody', this)">
+            <span class="fw-semibold"><i class="bi bi-moon-stars text-primary me-2"></i>Females — Weeks into Dark</span>
+            <span class="text-muted small ms-2">(8-hour / winter cycle)</span>
+            <span class="badge bg-primary ms-2" id="dashDarkInFCount"></span>
+            <i class="bi bi-chevron-up ms-auto text-muted dash-collapse-icon"></i>
+          </div>
+          <div id="dashDarkInFBody" class="collapse show">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Ferret</th>
+                    <th>Weeks in Dark</th>
+                    <th>Cycle Started</th>
+                    <th>Age</th>
+                    <th>Location</th>
+                  </tr>
+                </thead>
+                <tbody id="dashDarkInFList"></tbody>
+              </table>
+            </div>
+            <div class="card-footer bg-white text-muted small py-2">
+              Continuous weeks on 8-hour light. Keeping the same schedule on a move does not reset the clock.
+            </div>
+          </div>
+        </div>
+
+        <!-- Females — Weeks out of Dark -->
+        <div class="card mt-3 hide-cleaner" id="dashDarkOutFCard" style="display:none">
+          <div class="card-header bg-white d-flex align-items-center py-3" role="button"
+               data-bs-toggle="collapse" data-bs-target="#dashDarkOutFBody" aria-expanded="true"
+               onclick="toggleDashCollapse('dashDarkOutFBody', this)">
+            <span class="fw-semibold"><i class="bi bi-sun text-warning me-2"></i>Females — Weeks out of Dark</span>
+            <span class="text-muted small ms-2">(standard / 16-hour cycle)</span>
+            <span class="badge bg-secondary ms-2" id="dashDarkOutFCount"></span>
+            <i class="bi bi-chevron-up ms-auto text-muted dash-collapse-icon"></i>
+          </div>
+          <div id="dashDarkOutFBody" class="collapse show">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Ferret</th>
+                    <th>Weeks out of Dark</th>
+                    <th>Cycle Started</th>
+                    <th>Age</th>
+                    <th>Location</th>
+                  </tr>
+                </thead>
+                <tbody id="dashDarkOutFList"></tbody>
+              </table>
+            </div>
+            <div class="card-footer bg-white text-muted small py-2">
+              Continuous weeks on standard 16-hour light.
+            </div>
+          </div>
+        </div>
+
+        <!-- Vaccinations Due Board -->
+        <div class="card mt-3 admin-research-only" id="dashVaccCard" style="display:none">
+          <div class="card-header bg-white d-flex align-items-center py-3" role="button"
+               data-bs-toggle="collapse" data-bs-target="#dashVaccBody" aria-expanded="true"
+               onclick="toggleDashCollapse('dashVaccBody', this)">
+            <span class="fw-semibold"><i class="bi bi-syringe text-warning me-2"></i>Vaccinations Due</span>
+            <span class="text-muted small ms-2">(rabies due within 30 days or overdue)</span>
+            <span class="badge bg-warning text-dark ms-2" id="dashVaccCount"></span>
+            <i class="bi bi-chevron-up ms-auto text-muted dash-collapse-icon"></i>
+          </div>
+          <div id="dashVaccBody" class="collapse show">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Ferret</th>
+                    <th>Due Date</th>
+                    <th>Days</th>
+                    <th>Location</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="dashVaccList"></tbody>
+              </table>
+            </div>
+            <div class="card-footer bg-white text-muted small py-2">
+              Overdue rows are highlighted. Click a row to open the ferret and record a vaccination.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ferrets -->
+      <div id="page-ferrets" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-grid-3x3-gap me-2"></i>Ferrets</h2>
+          <input id="ferretSearch" type="search" class="form-control" style="max-width:240px"
+            placeholder="Search ferrets…">
+          <select id="ferretSort" class="form-select" style="max-width:160px" onchange="renderFerretGrid()">
+            <option value="name">Sort: Name</option>
+            <option value="age">Sort: Age</option>
+            <option value="sex">Sort: Sex</option>
+            <option value="room">Sort: Room</option>
+            <option value="supplier">Sort: Supplier</option>
+          </select>
+          <div class="ms-auto d-flex gap-2 flex-wrap">
+            <button id="btnAddLocation" class="btn btn-outline-secondary d-none"
+              onclick="new bootstrap.Modal(document.getElementById('addrModal')).show()"><i
+                class="bi bi-geo-alt me-1"></i>Add Location</button>
+            <button id="btnAddSupplier" class="btn btn-outline-secondary d-none" onclick="openSupplierModal()"><i
+                class="bi bi-truck me-1"></i>Add Supplier</button>
+            <button id="btnAddFerret" class="btn btn-primary d-none" onclick="openFerretModal()"><i
+                class="bi bi-plus-lg me-1"></i>Add Ferret</button>
+          </div>
+        </div>
+        <ul class="nav nav-tabs mb-3" id="ferretTabs">
+          <li class="nav-item">
+            <button class="nav-link active" id="tabActive" onclick="switchFerretTab('active')">
+              <span class="status-dot dot-active me-1" style="display:inline-block"></span>
+              Active <span id="tabActiveCount" class="badge bg-secondary ms-1"></span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tabDeceased" onclick="switchFerretTab('deceased')">
+              <span class="status-dot dot-dead me-1" style="display:inline-block"></span>
+              Deceased <span id="tabDeceasedCount" class="badge bg-secondary ms-1"></span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tabPending" onclick="switchFerretTab('pending')">
+              <i class="bi bi-bookmark-check me-1"></i>
+              Pending <span id="tabPendingCount" class="badge bg-secondary ms-1"></span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tabResearch" onclick="switchFerretTab('research')">
+              <i class="bi bi-clipboard2-pulse me-1"></i>
+              Research <span id="tabResearchCount" class="badge bg-secondary ms-1"></span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tabDistributed" onclick="switchFerretTab('distributed')">
+              <i class="bi bi-box-arrow-right me-1"></i>
+              Distributed <span id="tabDistributedCount" class="badge bg-secondary ms-1"></span>
+            </button>
+          </li>
+          <li class="nav-item admin-research-only">
+            <button class="nav-link" id="tabArchived" onclick="switchFerretTab('archived')">
+              <i class="bi bi-archive me-1"></i>
+              Archived <span id="tabArchivedCount" class="badge bg-secondary ms-1"></span>
+            </button>
+          </li>
+        </ul>
+        <div id="ferretGrid" class="row g-3"></div>
+      </div>
+
+      <!-- Ferret Detail -->
+      <div id="page-ferret-detail" class="page">
+        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+          <button class="btn btn-outline-secondary btn-sm" onclick="nav('ferrets')"><i
+              class="bi bi-arrow-left me-1"></i>Back</button>
+          <button class="btn btn-outline-secondary btn-sm no-print" onclick="printFerretCard(_currentFerretId)" title="Print complete ferret record (all tabs)">
+            <i class="bi bi-printer me-1"></i>Print
+          </button>
+        </div>
+        <div id="ferretDetail"></div>
+      </div>
+
+      <!-- Litters -->
+      <div id="page-litters" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-egg me-2"></i>Litters</h2>
+          <label class="small text-muted mb-0 ms-3">
+            <input type="checkbox" class="form-check-input me-1" id="litterShowSeparated" onchange="loadLitters()">
+            Show separated / mature (26+ wk)
+          </label>
+          <button id="btnAddLitterMain" class="btn btn-primary ms-auto d-none" onclick="openGlobalLitterModal()"><i
+              class="bi bi-plus-lg me-1"></i>Add Litter</button>
+        </div>
+        <p class="text-muted small mb-2">Sibling groups stay here after kits become individuals until they are split at sexual maturity (26 weeks, or earlier if marked separated). Older litters stay in Reports and Statistics.</p>
+        <div class="card">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Litter ID</th>
+                  <th>Jill (Mother)</th>
+                  <th>Father</th>
+                  <th>Kits</th>
+                  <th>Stillborn</th>
+                  <th>Kit deaths</th>
+                  <th>Individuals Created</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="litterTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Locations -->
+      <div id="page-locations" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-geo-alt me-2"></i>Locations</h2>
+          <button id="btnAddLocationMain" class="btn btn-outline-secondary ms-auto d-none"
+            onclick="new bootstrap.Modal(document.getElementById('addrModal')).show()"><i
+              class="bi bi-plus-lg me-1"></i>Add Location</button>
+        </div>
+
+        <div id="locationAccordion" class="accordion"></div>
+      </div>
+
+      <!-- Suppliers -->
+      <div id="page-suppliers" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-truck me-2"></i>Suppliers</h2>
+          <button id="btnAddSupplierMain" class="btn btn-primary ms-auto d-none" onclick="openSupplierModal()"><i
+              class="bi bi-plus-lg me-1"></i>Add Supplier</button>
+        </div>
+        <div class="row g-3" id="supplierCards"></div>
+      </div>
+
+      <!-- Distribution -->
+      <div id="page-distribution" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-box-arrow-right me-2"></i>Distribution</h2>
+          <div class="ms-auto d-flex gap-2">
+            <button id="btnAddDistributor" class="btn btn-outline-secondary d-none no-print" onclick="openDistributorModal()">
+              <i class="bi bi-plus-lg me-1"></i>Add Distributor
+            </button>
+            <button class="btn btn-outline-secondary no-print" onclick="window.print()" title="Print current filtered view">
+              <i class="bi bi-printer me-1"></i>Print
+            </button>
+          </div>
+        </div>
+
+        <!-- Distributor filter bar -->
+        <div class="card mb-3 p-3 no-print">
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <span class="fw-semibold text-muted small">Filter by Distributor:</span>
+            <div id="distFilterBtns" class="d-flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+
+        <!-- Summary cards per distributor -->
+        <div id="distSummaryCards" class="row g-3 mb-4"></div>
+
+        <!-- Events table -->
+        <div class="card">
+          <div class="card-header bg-white d-flex align-items-center py-3">
+            <span class="fw-semibold" id="distTableTitle">All Distribution Records</span>
+            <span id="distTableCount" class="badge bg-secondary ms-2"></span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Ferret</th>
+                  <th>Animal ID</th>
+                  <th>Sex</th>
+                  <th>Distributor</th>
+                  <th>Price</th>
+                  <th>Notes</th>
+                  <th>Recorded By</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="distTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Research -->
+      <div id="page-research" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-clipboard2-pulse me-2"></i>Research</h2>
+          <button class="btn btn-primary ms-auto" onclick="openStudyModal()" id="btnAddStudy">
+            <i class="bi bi-plus-lg me-1"></i>New Study
+          </button>
+        </div>
+        <p class="text-muted small mb-3">Animals assigned here leave the Active roster but stay in care on site (usually the Research room) until the study ends. Controls can be reintegrated. Experimentally infected animals should be marked deceased (euthanized per protocol), which closes the assignment automatically.</p>
+        <div id="researchStudyCards" class="row g-3 mb-4"></div>
+        <div class="card">
+          <div class="card-header bg-white py-3 fw-semibold">Currently on research</div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Ferret</th>
+                  <th>Animal ID</th>
+                  <th>Study</th>
+                  <th>Cohort</th>
+                  <th>Assigned</th>
+                  <th>Location</th>
+                  <th>Sponsor</th>
+                  <th>Sex</th>
+                </tr>
+              </thead>
+              <tbody id="researchAssignTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reports -->
+      <div id="page-reports" class="page admin-research-maternity-only">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-file-earmark-bar-graph me-2"></i>Reports</h2>
+          <button class="btn btn-outline-secondary ms-auto no-print" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Print</button>
+        </div>
+
+        <ul class="nav nav-tabs mb-3 no-print" id="reportTabs">
+          <li class="nav-item"><button class="nav-link active" onclick="switchReportTab('room')">Ferrets by Room</button></li>
+          <li class="nav-item"><button class="nav-link" onclick="switchReportTab('repro')">Reproductive Status</button></li>
+          <li class="nav-item"><button class="nav-link" onclick="switchReportTab('deaths')">Deaths</button></li>
+          <li class="nav-item"><button class="nav-link" onclick="switchReportTab('infant')">Infant Mortality</button></li>
+          <li class="nav-item"><button class="nav-link" onclick="switchReportTab('distribution')">Distribution</button></li>
+        </ul>
+
+        <div class="card p-3 mb-3 no-print" id="reportDateFilterCard" style="display:none">
+          <div class="d-flex gap-3 align-items-end flex-wrap">
+            <div>
+              <label class="form-label small fw-semibold mb-1">From</label>
+              <input type="date" id="repDateFrom" class="form-control form-control-sm">
+            </div>
+            <div>
+              <label class="form-label small fw-semibold mb-1">To</label>
+              <input type="date" id="repDateTo" class="form-control form-control-sm">
+            </div>
+            <div id="repDeathNameWrap" style="display:none">
+              <label class="form-label small fw-semibold mb-1">Name / AID</label>
+              <input type="search" id="repDeathSearch" class="form-control form-control-sm"
+                style="min-width:220px" placeholder="Look up by name or AID…"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();loadCurrentReport();}">
+            </div>
+            <button class="btn btn-sm btn-primary" onclick="loadCurrentReport()"><i class="bi bi-search me-1"></i>Apply</button>
+          </div>
+        </div>
+
+        <div id="reportContent"></div>
+      </div>
+
+
+      <!-- Statistics -->
+      <div id="page-statistics" class="page admin-research-maternity-only">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-bar-chart-line me-2"></i>Statistics</h2>
+        </div>
+
+        <ul class="nav nav-tabs mb-3" id="statsTabs">
+          <li class="nav-item"><button class="nav-link active" data-stats-tab="overview" onclick="switchStatsTab('overview')">Overview</button></li>
+          <li class="nav-item"><button class="nav-link" data-stats-tab="age" onclick="switchStatsTab('age')">Age Lists</button></li>
+          <li class="nav-item"><button class="nav-link" data-stats-tab="population" onclick="switchStatsTab('population')">Population</button></li>
+          <li class="nav-item"><button class="nav-link" data-stats-tab="health" onclick="switchStatsTab('health')">Health</button></li>
+          <li class="nav-item"><button class="nav-link" data-stats-tab="genetics" onclick="switchStatsTab('genetics')">Genetics</button></li>
+          <li class="nav-item"><button class="nav-link" data-stats-tab="reproduction" onclick="switchStatsTab('reproduction')">Reproduction</button></li>
+        </ul>
+
+        <!-- Overview -->
+        <div id="stats-overview" class="stats-panel">
+          <div class="row g-3 mb-4" id="statsOverviewCards">
+            <div class="col-md-3"><div class="card"><div class="card-body text-center text-muted py-4">Loading…</div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header bg-white py-2 fw-semibold">Quick Notes</div>
+            <div class="card-body small text-muted">
+              <p class="mb-1">Life stages: <strong>Infancy</strong> < 26 weeks (6 months) · <strong>Adolescence</strong> 26–52 weeks · <strong>Adult</strong> > 52 weeks. A kit has survived once older than 6 months.</p>
+              <p class="mb-0">Pyramid final bin is <strong>256+ weeks</strong>. Weight-change thresholds are configurable on the Health tab.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Age Lists -->
+        <div id="stats-age" class="stats-panel" style="display:none">
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="row g-2 align-items-end">
+                <div class="col-auto">
+                  <label class="form-label small fw-semibold mb-1">Min Age</label>
+                  <input type="number" id="statsAgeMin" class="form-control form-control-sm" style="width:6rem" min="0" step="1" placeholder="0">
+                </div>
+                <div class="col-auto">
+                  <label class="form-label small fw-semibold mb-1">Max Age</label>
+                  <input type="number" id="statsAgeMax" class="form-control form-control-sm" style="width:6rem" min="0" step="1" placeholder="—">
+                </div>
+                <div class="col-auto">
+                  <label class="form-label small fw-semibold mb-1">Unit</label>
+                  <select id="statsAgeUnit" class="form-select form-select-sm">
+                    <option value="weeks">Weeks</option>
+                    <option value="months">Months</option>
+                  </select>
+                </div>
+                <div class="col-auto">
+                  <label class="form-label small fw-semibold mb-1">Sex</label>
+                  <select id="statsAgeSex" class="form-select form-select-sm">
+                    <option value="">Any</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                  </select>
+                </div>
+                <div class="col-auto">
+                  <label class="form-label small fw-semibold mb-1">Status</label>
+                  <select id="statsAgeStatus" class="form-select form-select-sm">
+                    <option value="active">Active</option>
+                    <option value="deceased">Deceased</option>
+                    <option value="distributed">Distributed</option>
+                    <option value="research">Research</option>
+                    <option value="pending">Pending distribution</option>
+                    <option value="all">All</option>
+                  </select>
+                </div>
+                <div class="col-auto">
+                  <label class="form-label small fw-semibold mb-1">Acquisition</label>
+                  <select id="statsAgeAcq" class="form-select form-select-sm">
+                    <option value="">Any</option>
+                    <option value="Littered">Littered</option>
+                    <option value="Sourced">Sourced</option>
+                  </select>
+                </div>
+                <div class="col-auto">
+                  <button class="btn btn-sm btn-primary" onclick="loadStatsAgeList()"><i class="bi bi-search me-1"></i>Apply</button>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="exportStatsAgeCsv()" title="Export current results"><i class="bi bi-download"></i></button>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="printStatsAgeList()" title="Print current results"><i class="bi bi-printer"></i> Print</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header bg-white py-2 d-flex align-items-center">
+              <span class="fw-semibold">Matching Ferrets</span>
+              <span id="statsAgeCount" class="badge bg-secondary ms-2">0</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>RFID</th><th>Name</th><th>Sex</th><th>Age (wk)</th><th>Age (mo)</th>
+                    <th>Status</th><th>Weight</th><th>Room</th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="statsAgeTable">
+                  <tr><td colspan="9" class="text-muted text-center py-4">Set filters and click Apply.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Population -->
+        <div id="stats-population" class="stats-panel" style="display:none">
+          <div class="row g-3 mb-3" id="statsPopCards"></div>
+          <div class="card">
+            <div class="card-header bg-white py-2 d-flex align-items-center">
+              <span class="fw-semibold">Population Pyramid</span>
+              <span class="text-muted small ms-2">8-week bins · final bin 256+</span>
+            </div>
+            <div class="card-body" style="height:520px;position:relative">
+              <canvas id="pyramidChart" style="cursor:pointer"></canvas>
+            </div>
+            <div class="card-footer bg-white py-2 text-muted small">Click a bar to list those ferrets.</div>
+          </div>
+          <div class="card mt-3" id="pyramidListCard" style="display:none">
+            <div class="card-header bg-white py-2 d-flex align-items-center">
+              <span class="fw-semibold" id="pyramidListTitle">Age group</span>
+              <span class="badge bg-secondary ms-2" id="pyramidListCount">0</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>AID</th><th>Name</th><th>Sex</th><th>Age (wk)</th><th>Status</th><th>Room</th></tr></thead>
+                <tbody id="pyramidListTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Health -->
+        <div id="stats-health" class="stats-panel" style="display:none">
+          <div class="row g-3 mb-3">
+            <div class="col-lg-6">
+              <div class="card h-100">
+                <div class="card-header bg-white py-2 fw-semibold">Age at Death</div>
+                <div class="card-body" id="statsDeathSummary">
+                  <div class="text-muted text-center py-3">Loading…</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="card h-100">
+                <div class="card-header bg-white py-2 fw-semibold">Causes of Death</div>
+                <div class="card-body" id="statsCodSummary">
+                  <div class="text-muted text-center py-3">Loading…</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card mb-3">
+            <div class="card-header bg-white py-2 d-flex align-items-center flex-wrap gap-2">
+              <span class="fw-semibold">Weight Change Alerts</span>
+              <div class="ms-auto d-flex gap-2 align-items-end flex-wrap">
+                <div>
+                  <label class="form-label small mb-0">Sudden % / days</label>
+                  <div class="input-group input-group-sm" style="width:9rem">
+                    <input type="number" id="statsSuddenPct" class="form-control" value="10" min="1" step="1">
+                    <span class="input-group-text">%</span>
+                    <input type="number" id="statsSuddenDays" class="form-control" value="14" min="1">
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label small mb-0">Gradual % / days</label>
+                  <div class="input-group input-group-sm" style="width:9rem">
+                    <input type="number" id="statsGradualPct" class="form-control" value="5" min="1" step="1">
+                    <span class="input-group-text">%</span>
+                    <input type="number" id="statsGradualDays" class="form-control" value="28" min="1">
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="loadStatsWeightAlerts()">Apply</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="printStatsWeightAlerts()" title="Print weight-change alerts">
+                  <i class="bi bi-printer me-1"></i>Print
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead><tr><th>AID</th><th>Name</th><th>Alert</th><th>Δ %</th><th>Window</th><th>Current Wt</th><th></th></tr></thead>
+                <tbody id="statsWeightTable">
+                  <tr><td colspan="7" class="text-muted text-center py-3">Click Apply to load alerts.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Genetics -->
+        <div id="stats-genetics" class="stats-panel" style="display:none">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-header bg-white py-2 fw-semibold">Individual CoI</div>
+                <div class="card-body">
+                  <div class="input-group input-group-sm mb-2">
+                    <input type="text" id="statsCoiAid" class="form-control" placeholder="Animal ID or name">
+                    <button class="btn btn-primary" onclick="loadStatsCoi()">Calculate</button>
+                  </div>
+                  <div id="statsCoiResult" class="small text-muted">Enter an AID or name to compute Coefficient of Inbreeding.</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-header bg-white py-2 fw-semibold">Pairwise Relatedness</div>
+                <div class="card-body">
+                  <div class="row g-2 mb-2">
+                    <div class="col"><input type="text" id="statsRelA" class="form-control form-control-sm" placeholder="Animal A"></div>
+                    <div class="col"><input type="text" id="statsRelB" class="form-control form-control-sm" placeholder="Animal B"></div>
+                    <div class="col-auto"><button class="btn btn-sm btn-primary" onclick="loadStatsRelatedness()">Compare</button></div>
+                  </div>
+                  <div id="statsRelResult" class="small text-muted">Select two animals to compute Coefficient of Relationship.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header bg-white py-2 d-flex align-items-center">
+              <span class="fw-semibold">High CoI Animals</span>
+              <div class="ms-auto d-flex gap-2 align-items-center">
+                <label class="small mb-0">Threshold</label>
+                <select id="statsCoiThreshold" class="form-select form-select-sm" style="width:7rem" onchange="loadStatsHighCoi()">
+                  <option value="0.0625">6.25%</option>
+                  <option value="0.125" selected>12.5%</option>
+                  <option value="0.25">25%</option>
+                </select>
+                <button class="btn btn-sm btn-outline-secondary" onclick="exportStatsCoiCsv()"><i class="bi bi-download"></i></button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead><tr><th>AID</th><th>Name</th><th>Sex</th><th>CoI</th><th>Interpretation</th><th>Parents</th></tr></thead>
+                <tbody id="statsHighCoiTable">
+                  <tr><td colspan="6" class="text-muted text-center py-3">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card mt-3">
+            <div class="card-header bg-white py-2 fw-semibold">Reference Values</div>
+            <div class="card-body small">
+              <ul class="mb-0">
+                <li>Parent–offspring / full siblings ≈ <strong>50%</strong></li>
+                <li>Half-siblings / uncle–niece / grandparent–grandchild ≈ <strong>25%</strong></li>
+                <li>First cousins ≈ <strong>12.5%</strong></li>
+                <li>Second cousins ≈ <strong>3.125%</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reproduction -->
+        <div id="stats-reproduction" class="stats-panel" style="display:none">
+          <div class="row g-3 mb-3" id="statsReproCards"></div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header bg-white py-2 fw-semibold">Top Jills (by offspring)</div>
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover mb-0">
+                    <thead><tr><th>#</th><th>AID</th><th>Name</th><th>Offspring</th></tr></thead>
+                    <tbody id="statsTopJills"><tr><td colspan="4" class="text-muted text-center py-3">Loading…</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header bg-white py-2 fw-semibold">Top Hobs (by offspring)</div>
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover mb-0">
+                    <thead><tr><th>#</th><th>AID</th><th>Name</th><th>Offspring</th></tr></thead>
+                    <tbody id="statsTopHobs"><tr><td colspan="4" class="text-muted text-center py-3">Loading…</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users -->
+      <div id="page-users" class="page admin-only">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-people me-2"></i>User Management</h2>
+          <button class="btn btn-primary ms-auto" onclick="openUserModal()"><i class="bi bi-plus-lg me-1"></i>Add
+            User</button>
+        </div>
+        <div class="card">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Last Login</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="userTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div id="page-activity" class="page admin-research-only">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-journal-text me-2"></i>Activity Log</h2>
+          <span id="actTotalBadge" class="badge bg-secondary ms-2" style="font-size:.85rem"></span>
+        </div>
+        <!-- Filter bar -->
+        <div class="card mb-3 p-3">
+          <div class="d-flex flex-wrap gap-3 align-items-end">
+            <div>
+              <label class="form-label small fw-semibold mb-1">From</label>
+              <input type="date" id="actDateFrom" class="form-control form-control-sm" style="max-width:150px">
+            </div>
+            <div>
+              <label class="form-label small fw-semibold mb-1">To</label>
+              <input type="date" id="actDateTo" class="form-control form-control-sm" style="max-width:150px">
+            </div>
+            <div>
+              <label class="form-label small fw-semibold mb-1">User</label>
+              <select id="actUserFilter" class="form-select form-select-sm" style="max-width:180px">
+                <option value="">All Users</option>
+              </select>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary btn-sm" onclick="applyActFilters()"><i
+                  class="bi bi-search me-1"></i>Apply</button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="clearActFilters()">Clear</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Table</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="actTable"></tbody>
+            </table>
+          </div>
+          <div class="d-flex align-items-center justify-content-between px-3 py-2 border-top" id="actPagination"
+            style="display:none">
+            <span class="text-muted small" id="actPageInfo"></span>
+            <div class="d-flex gap-1" id="actPageBtns"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bug Reports (admin inbox) -->
+      <div id="page-bug-reports" class="page admin-only">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-bug me-2"></i>Bug Reports</h2>
+          <span id="bugTotalBadge" class="badge bg-secondary ms-2" style="font-size:.85rem"></span>
+        </div>
+        <div class="card mb-3 p-3">
+          <div class="d-flex flex-wrap gap-3 align-items-end">
+            <div>
+              <label class="form-label small fw-semibold mb-1">Status</label>
+              <select id="bugStatusFilter" class="form-select form-select-sm" style="max-width:180px" onchange="loadBugReports()">
+                <option value="active" selected>Active</option>
+                <option value="open">Open</option>
+                <option value="in_progress">In progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="wont_fix">Won't fix</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label small fw-semibold mb-1">Category</label>
+              <select id="bugCategoryFilter" class="form-select form-select-sm" style="max-width:200px" onchange="loadBugReports()">
+                <option value="">All categories</option>
+                <option value="bug">Bug</option>
+                <option value="data">Data correction</option>
+                <option value="change">Change request</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadBugReports()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+          </div>
+        </div>
+        <div id="bugReportList"></div>
+      </div>
+
+      <!-- Cleaning Reports -->
+      <div id="page-cleaning-reports" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-check2-square me-2"></i>Cleaning Reports</h2>
+        </div>
+
+        <!-- Submit Form (all users) -->
+        <div id="crSubmitSection">
+          <div id="crSuccess" class="d-none mb-4">
+            <div class="card text-center p-5 shadow-sm" style="border-radius:16px;">
+              <div style="font-size:3.5rem; margin-bottom:1rem;">✅</div>
+              <h2 class="h4 fw-bold text-success mb-2">Report Submitted!</h2>
+              <p class="text-muted mb-4">Your cleaning report has been recorded successfully.</p>
+              <button class="btn btn-primary px-5" onclick="resetCleaningForm()">
+                <i class="bi bi-plus-lg me-2"></i>Submit Another Report
+              </button>
+            </div>
+          </div>
+          <div id="crFormWrap">
+            <div class="card shadow-sm mb-4" style="border-radius:14px;">
+              <div class="card-body p-4">
+
+                <!-- Reporter Name -->
+                <div class="mb-4">
+                  <label class="fw-bold fs-6 d-block mb-1">
+                    <span class="text-danger me-1">●</span>Your Name
+                  </label>
+                  <p class="text-muted small mb-2">Enter your name so the report can be attributed to you.</p>
+                  <input id="crReporterName" class="form-control form-control-lg" placeholder="First and last name"
+                    style="max-width:400px;">
+                </div>
+
+                <hr class="my-3">
+
+                <!-- Room Selection -->
+                <div class="mb-4">
+                  <label class="fw-bold fs-6 d-block mb-1">
+                    <span class="text-danger me-1">●</span>What room(s) did you clean?
+                  </label>
+                  <p class="text-muted small mb-2">Select all rooms you cleaned during this session.</p>
+                  <div id="crRoomList" class="d-flex flex-wrap gap-2"></div>
+                </div>
+
+                <hr class="my-3">
+
+                <!-- Inside Cage Cleaning -->
+                <div class="mb-4">
+                  <div class="d-flex align-items-start gap-3 p-3 rounded-3 cr-check-box" id="crCageBox"
+                    style="background:#f8f9fa; border:2px solid #dee2e6; cursor:pointer;"
+                    onclick="toggleCrCheck('crCage','crCageBox')">
+                    <div style="margin-top:2px;">
+                      <div id="crCageCheck" class="cr-checkmark"></div>
+                    </div>
+                    <div>
+                      <div class="fw-bold"><span class="text-danger me-1">●</span>Inside Cage Cleaning</div>
+                      <div class="text-muted small mt-1">Check to confirm that you scraped or vacuumed inside the cages.
+                      </div>
+                    </div>
+                  </div>
+                  <input type="checkbox" id="crCage" style="display:none">
+                </div>
+
+                <!-- Tray Cleaning -->
+                <div class="mb-4">
+                  <div class="d-flex align-items-start gap-3 p-3 rounded-3 cr-check-box" id="crTrayBox"
+                    style="background:#f8f9fa; border:2px solid #dee2e6; cursor:pointer;"
+                    onclick="toggleCrCheck('crTray','crTrayBox')">
+                    <div style="margin-top:2px;">
+                      <div id="crTrayCheck" class="cr-checkmark"></div>
+                    </div>
+                    <div>
+                      <div class="fw-bold"><span class="text-danger me-1">●</span>Tray Cleaning</div>
+                      <div class="text-muted small mt-1">Check to confirm that you scraped or vacuumed the trays under
+                        the cages.</div>
+                    </div>
+                  </div>
+                  <input type="checkbox" id="crTray" style="display:none">
+                </div>
+
+                <!-- Sweeping, Scraping, Mopping -->
+                <div class="mb-4">
+                  <div class="d-flex align-items-start gap-3 p-3 rounded-3 cr-check-box" id="crFloorBox"
+                    style="background:#f8f9fa; border:2px solid #dee2e6; cursor:pointer;"
+                    onclick="toggleCrCheck('crFloor','crFloorBox')">
+                    <div style="margin-top:2px;">
+                      <div id="crFloorCheck" class="cr-checkmark"></div>
+                    </div>
+                    <div>
+                      <div class="fw-bold"><span class="text-danger me-1">●</span>Sweeping, Scraping, and Mopping</div>
+                      <div class="text-muted small mt-1">Check to confirm that you swept, scraped, and mopped the
+                        floors.</div>
+                    </div>
+                  </div>
+                  <input type="checkbox" id="crFloor" style="display:none">
+                </div>
+
+                <!-- Food and Water Check -->
+                <div class="mb-4">
+                  <div class="d-flex align-items-start gap-3 p-3 rounded-3 cr-check-box" id="crFoodBox"
+                    style="background:#f8f9fa; border:2px solid #dee2e6; cursor:pointer;"
+                    onclick="toggleCrCheck('crFood','crFoodBox')">
+                    <div style="margin-top:2px;">
+                      <div id="crFoodCheck" class="cr-checkmark"></div>
+                    </div>
+                    <div>
+                      <div class="fw-bold"><span class="text-danger me-1">●</span>Food and Water Check</div>
+                      <div class="text-muted small mt-1">Check to confirm that you checked that every animal had access
+                        to food and water.</div>
+                    </div>
+                  </div>
+                  <input type="checkbox" id="crFood" style="display:none">
+                </div>
+
+                <hr class="my-3">
+
+                <!-- Issues -->
+                <div class="mb-4">
+                  <label class="fw-bold fs-6 d-block mb-1">Were there any issues when cleaning the room?</label>
+                  <p class="text-muted small mb-2">Such as animal fighting, broken cage, animals escaped the room, or
+                    other. If so, please describe what happened below.</p>
+                  <div class="d-flex gap-2 mb-2 flex-wrap">
+                    <button type="button" class="btn btn-outline-secondary btn-sm cr-issue-tag"
+                      onclick="toggleCrIssueTag(this, 'Animal fighting')">🐾 Animal Fighting</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm cr-issue-tag"
+                      onclick="toggleCrIssueTag(this, 'Broken cage')">🔧 Broken Cage</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm cr-issue-tag"
+                      onclick="toggleCrIssueTag(this, 'Animal escaped room')">🚨 Animal Escaped</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm cr-issue-tag"
+                      onclick="toggleCrIssueTag(this, 'Other')">📝 Other</button>
+                  </div>
+                  <div class="position-relative">
+                    <textarea id="crIssues" class="form-control" rows="3"
+                      placeholder="Type your answer or tap the microphone to speak…"
+                      style="padding-right:3rem; font-size:1rem;"></textarea>
+                    <button type="button" id="crMicBtn" onclick="toggleCrSpeech()" title="Tap to speak"
+                      style="position:absolute;right:10px;bottom:10px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#6c757d;padding:4px;">🎤</button>
+                  </div>
+                  <div id="crMicStatus" class="text-muted small mt-1" style="display:none;">
+                    <span class="spinner-grow spinner-grow-sm text-danger me-1"></span>Listening… tap mic to stop.
+                  </div>
+                </div>
+
+                <hr class="my-3">
+
+                <!-- Signature -->
+                <div class="mb-2">
+                  <label class="fw-bold fs-6 d-block mb-1">
+                    <span class="text-danger me-1">●</span>Signature
+                  </label>
+                  <p class="text-muted small mb-2">Sign below to confirm that everything marked above was completed.</p>
+                  <div
+                    style="border:2px solid #dee2e6; border-radius:10px; background:#fff; position:relative; max-width:640px;">
+                    <canvas id="crSigCanvas"
+                      style="width:100%;height:180px;display:block;border-radius:8px;touch-action:none;"></canvas>
+                    <button type="button" onclick="clearCrSignature()"
+                      style="position:absolute;top:8px;right:10px;background:none;border:none;color:#adb5bd;font-size:.8rem;cursor:pointer;">
+                      <i class="bi bi-x-circle me-1"></i>Clear
+                    </button>
+                    <div id="crSigPlaceholder"
+                      style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#adb5bd;pointer-events:none;font-size:.95rem;">
+                      ✍️ Sign here</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div id="crFormError" class="alert alert-danger d-none mb-3"></div>
+
+            <button class="btn btn-success px-5 py-3 fw-bold fs-5 shadow-sm mb-5" onclick="submitCleaningReport()"
+              style="border-radius:12px;">
+              <i class="bi bi-check2-circle me-2"></i>Submit Cleaning Report
+            </button>
+          </div>
+
+        <!-- Report History (admin/research only) -->
+        <div id="crHistorySection" class="d-none">
+          <hr class="my-4">
+          <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+            <h3 class="h5 fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Report History</h3>
+            <div class="ms-auto d-flex gap-2 align-items-center">
+              <label class="form-label mb-0 text-muted small">Filter by Room:</label>
+              <select id="crRoomFilter" class="form-select form-select-sm" style="max-width:130px"
+                onchange="loadCrHistory()">
+                <option value="">All Rooms</option>
+              </select>
+            </div>
+          </div>
+          <div class="card">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Name</th>
+                    <th>Rooms</th>
+                    <th>Cage</th>
+                    <th>Trays</th>
+                    <th>Floors</th>
+                    <th>Food/Water</th>
+                    <th>Issues</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="crTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /crSubmitSection -->
+      </div><!-- /page-cleaning-reports -->
+
+      <!-- Batch Care -->
+      <div id="page-batch-care" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-ui-checks me-2"></i>Batch Care</h2>
+        </div>
+        <p class="text-muted">Log the same care event for several animals at once. Pick a type, add names, then record.</p>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="mb-2 fw-semibold">Event type</div>
+            <div class="d-flex flex-wrap gap-2" id="batchEventTypeBtns">
+              <button type="button" class="btn btn-outline-primary" data-batch-kind="bath" onclick="selectBatchKind('bath')">
+                <i class="bi bi-droplet me-1"></i>Bath
+              </button>
+              <button type="button" class="btn btn-outline-primary" data-batch-kind="nail_trim" onclick="selectBatchKind('nail_trim')">
+                <i class="bi bi-scissors me-1"></i>Nail Trim
+              </button>
+              <span id="batchVaccTypeBtnWrap">
+                <button type="button" class="btn btn-outline-primary admin-research-maternity-only" data-batch-kind="vaccination" onclick="selectBatchKind('vaccination')">
+                  <i class="bi bi-syringe me-1"></i>Vaccination
+                </button>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card d-none" id="batchCareCard">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label" id="batchDateLabel">Date</label>
+                <input type="date" class="form-control" id="batchDate">
+              </div>
+              <div class="col-md-4" id="batchTimeRow">
+                <label class="form-label">Time</label>
+                <input type="time" class="form-control" id="batchTime">
+              </div>
+              <div class="col-md-4" id="batchVaccTypeRow" style="display:none">
+                <label class="form-label">Vaccine type</label>
+                <select class="form-select" id="batchVaccType" onchange="toggleBatchRabiesDue()">
+                  <option value="rabies">Rabies</option>
+                  <option value="distemper">Distemper</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-0" id="batchVaccFields" style="display:none">
+              <div class="col-md-4">
+                <label class="form-label">Administered by <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="batchVaccBy" placeholder="Veterinarian or technician name">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Expiration date</label>
+                <input type="date" class="form-control" id="batchVaccExpiry">
+              </div>
+              <div class="col-md-4" id="batchVaccNextRow">
+                <label class="form-label">Next rabies due</label>
+                <input type="date" class="form-control" id="batchVaccNext">
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label">Notes <span class="text-muted fw-normal">(optional, applied to every animal)</span></label>
+              <textarea class="form-control" id="batchNotes" rows="2"></textarea>
+            </div>
+
+            <hr>
+
+            <div class="row g-2 align-items-end">
+              <div class="col-md-5">
+                <label class="form-label">Add ferret</label>
+                <div class="position-relative" id="batchFerretSearchWrap">
+                  <input type="text" class="form-control" id="batchFerretSearch" placeholder="Name or AID" autocomplete="off">
+                  <div class="list-group position-absolute w-100 shadow-sm d-none" id="batchFerretSuggest" style="z-index:5;max-height:240px;overflow:auto"></div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Add room</label>
+                <div class="input-group">
+                  <select class="form-select" id="batchRoomSelect">
+                    <option value="">Select room…</option>
+                  </select>
+                  <button type="button" class="btn btn-outline-secondary" onclick="addBatchRoom()">Add</button>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <button type="button" class="btn btn-outline-secondary w-100" onclick="addBatchFromAlerts()">Add from alerts</button>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-3" id="batchChipList">
+              <span class="text-muted" id="batchChipEmpty">No animals added yet.</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <div class="text-muted small" id="batchCountLabel">0 animals</div>
+              <button type="button" class="btn btn-primary" id="batchSubmitBtn" disabled onclick="submitBatchCare()">Log event</button>
+            </div>
+
+            <div id="batchResult" class="mt-3 d-none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Vet Plan -->
+      <div id="page-emergency-vet" class="page">
+        <div class="page-header">
+          <h2 class="h4"><i class="bi bi-hospital me-2"></i>Emergency Vet Plan</h2>
+        </div>
+        <div class="card">
+          <div class="card-body" id="emergencyVetBody">
+            <p class="text-muted mb-0">Plan content will go here.</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /app -->
+
+  <!-- placeholder so kiosk references don't break during transition -->
+  <div id="cleanerKiosk" style="display:none;">
+    <div
+      style="background:var(--brand); padding:1rem 1.5rem; display:flex; align-items:center; justify-content:space-between;">
+      <div style="color:#fff; font-size:1.1rem; font-weight:700;">🐾 Animal Colony Manager &mdash; Room Cleaning Report</div>
+      <div style="display:flex; align-items:center; gap:1rem;">
+        <div id="kioskUserInfo" style="color:rgba(255,255,255,.8); font-size:.9rem;"></div>
+        <button class="btn btn-sm btn-outline-light" onclick="doLogout()"><i class="bi bi-box-arrow-right me-1"></i>Sign
+          Out</button>
+      </div>
+    </div>
+    <div style="max-width:680px; margin:0 auto; padding:1.5rem;">
+      <div id="kioskSuccess" class="d-none">
+        <div class="card text-center p-5 shadow-sm" style="border-radius:16px;">
+          <div style="font-size:4rem; margin-bottom:1rem;">✅</div>
+          <h2 class="h3 fw-bold text-success mb-2">Report Submitted!</h2>
+          <p class="text-muted mb-4">Your cleaning report has been recorded successfully.</p>
+          <button class="btn btn-primary btn-lg px-5" onclick="resetKioskForm()">
+            <i class="bi bi-plus-lg me-2"></i>Submit Another Report
+          </button>
+        </div>
+      </div>
+      <div id="kioskForm">
+        <div class="card shadow-sm mb-3" style="border-radius:14px;">
+          <div class="card-body p-4">
+
+            <!-- Room Selection -->
+            <div class="mb-4">
+              <label class="fw-bold fs-6 d-block mb-1">
+                <span class="text-danger me-1">●</span>What room(s) did you clean?
+              </label>
+              <p class="text-muted small mb-2">Select all rooms you cleaned during this session.</p>
+              <div id="kioskRoomList" class="d-flex flex-wrap gap-2"></div>
+            </div>
+
+            <hr class="my-3">
+
+            <!-- Inside Cage Cleaning -->
+            <div class="mb-4">
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" id="kioskCageBox"
+                style="background:#f8f9fa; border:2px solid #dee2e6; cursor:pointer;"
+                onclick="toggleKioskCheck('kioskCage','kioskCageBox')">
+                <div style="margin-top:2px;">
+                  <div id="kioskCageCheck"
+                    style="width:28px;height:28px;border-radius:6px;border:2px solid #adb5bd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                  </div>
+                </div>
+                <div>
+                  <div class="fw-bold"><span class="text-danger me-1">●</span>Inside Cage Cleaning</div>
+                  <div class="text-muted small mt-1">Check to confirm that you scraped or vacuumed inside the cages.
+                  </div>
+                </div>
+              </div>
+              <input type="checkbox" id="kioskCage" style="display:none">
+            </div>
+
+            <!-- Tray Cleaning -->
+            <div class="mb-4">
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" id="kioskTrayBox"
+                style="background:#f8f9fa; border:2px solid #dee2e6; cursor:pointer;"
+                onclick="toggleKioskCheck('kioskTray','kioskTrayBox')">
+                <div style="margin-top:2px;">
+                  <div id="kioskTrayCheck"
+                    style="width:28px;height:28px;border-radius:6px;border:2px solid #adb5bd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                  </div>
+                </div>
+                <div>
+                  <div class="fw-bold"><span class="text-danger me-1">●</span>Tray Cleaning</div>
+                  <div class="text-muted small mt-1">Check to confirm that you scraped or vacuumed the trays under the
+                    cages.</div>
+                </div>
+              </div>
+              <input type="checkbox" id="kioskTray" style="display:none">
+            </div>
+
+            <!-- Sweeping, Scraping, and Mopping -->
+            <div class="mb-4">
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" id="kioskFloorBox"
+                style="background:#f8f9fa; border:2px solid #dee2e6; cursor:pointer;"
+                onclick="toggleKioskCheck('kioskFloor','kioskFloorBox')">
+                <div style="margin-top:2px;">
+                  <div id="kioskFloorCheck"
+                    style="width:28px;height:28px;border-radius:6px;border:2px solid #adb5bd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                  </div>
+                </div>
+                <div>
+                  <div class="fw-bold"><span class="text-danger me-1">●</span>Sweeping, Scraping, and Mopping</div>
+                  <div class="text-muted small mt-1">Check to confirm that you swept, scraped, and mopped the floors.
+                  </div>
+                </div>
+              </div>
+              <input type="checkbox" id="kioskFloor" style="display:none">
+            </div>
+
+            <!-- Food and Water Check -->
+            <div class="mb-4">
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" id="kioskFoodBox"
+                style="background:#f8f9fa; border:2px solid #dee2e6; cursor:pointer;"
+                onclick="toggleKioskCheck('kioskFood','kioskFoodBox')">
+                <div style="margin-top:2px;">
+                  <div id="kioskFoodCheck"
+                    style="width:28px;height:28px;border-radius:6px;border:2px solid #adb5bd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+                  </div>
+                </div>
+                <div>
+                  <div class="fw-bold"><span class="text-danger me-1">●</span>Food and Water Check</div>
+                  <div class="text-muted small mt-1">Check to confirm that you checked that every animal had access to
+                    food and water.</div>
+                </div>
+              </div>
+              <input type="checkbox" id="kioskFood" style="display:none">
+            </div>
+
+            <hr class="my-3">
+
+            <!-- Issues -->
+            <div class="mb-4">
+              <label class="fw-bold fs-6 d-block mb-1">Were there any issues when cleaning the room?</label>
+              <p class="text-muted small mb-2">Such as animal fighting, broken cage, animals escaped the room, or other.
+                If so, please describe what happened below.</p>
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button type="button" class="btn btn-outline-secondary btn-sm issue-tag"
+                  onclick="toggleIssueTag(this, 'Animal fighting')">🐾 Animal Fighting</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm issue-tag"
+                  onclick="toggleIssueTag(this, 'Broken cage')">🔧 Broken Cage</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm issue-tag"
+                  onclick="toggleIssueTag(this, 'Animal escaped room')">🚨 Animal Escaped</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm issue-tag"
+                  onclick="toggleIssueTag(this, 'Other')">📝 Other</button>
+              </div>
+              <div class="position-relative">
+                <textarea id="kioskIssues" class="form-control" rows="3"
+                  placeholder="Type your answer or tap the microphone to speak…"
+                  style="padding-right:3rem; font-size:1rem;"></textarea>
+                <button type="button" id="kioskMicBtn" onclick="toggleSpeechInput()" title="Tap to speak"
+                  style="position:absolute;right:10px;bottom:10px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#6c757d;padding:4px;">
+                  🎤
+                </button>
+              </div>
+              <div id="kioskMicStatus" class="text-muted small mt-1" style="display:none;"><span
+                  class="spinner-grow spinner-grow-sm text-danger me-1"></span>Listening… tap mic to stop.</div>
+            </div>
+
+            <hr class="my-3">
+
+            <!-- Signature -->
+            <div class="mb-2">
+              <label class="fw-bold fs-6 d-block mb-1">
+                <span class="text-danger me-1">●</span>Signature
+              </label>
+              <p class="text-muted small mb-2">Sign below to confirm that everything marked above was completed.</p>
+              <div style="border:2px solid #dee2e6; border-radius:10px; background:#fff; position:relative;">
+                <canvas id="sigCanvas"
+                  style="width:100%;height:180px;display:block;border-radius:8px;touch-action:none;"></canvas>
+                <button type="button" onclick="clearSignature()"
+                  style="position:absolute;top:8px;right:10px;background:none;border:none;color:#adb5bd;font-size:.8rem;cursor:pointer;">
+                  <i class="bi bi-x-circle me-1"></i>Clear
+                </button>
+                <div id="sigPlaceholder"
+                  style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#adb5bd;pointer-events:none;font-size:.95rem;">
+                  ✍️ Sign here</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div id="kioskError" class="alert alert-danger d-none mb-3"></div>
+
+        <button class="btn btn-success w-100 py-3 fw-bold fs-5 shadow-sm" onclick="submitKioskReport()"
+          style="border-radius:12px;">
+          <i class="bi bi-check2-circle me-2"></i>Submit Cleaning Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cleaning Report Detail Modal -->
+  <div class="modal fade" id="crDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Cleaning Report Detail</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="crDetailBody"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ─── MODALS ──────────────────────────────────────────────────────────────── -->
+
+  <!-- Ferret Modal -->
+  <div class="modal fade" id="ferretModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Add Ferret</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-md-6"><label class="form-label">Ferret Name <span class="text-danger">*</span></label><input
+                id="fName" class="form-control"></div>
+            <div class="col-md-6">
+              <label class="form-label">Animal ID</label>
+              <input class="form-control" value="Assigned automatically" disabled>
+              <div class="form-text">Internal AID — next number after the most recent animal. Not entered by staff.</div>
+            </div>
+            <div class="col-md-6"><label class="form-label">Birth Date <span class="text-danger">*</span></label><input
+                id="fBirthDate" type="date" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">Weight (g)</label><input id="fWeight" type="number"
+                class="form-control" value="0"></div>
+            <div class="col-md-6"><label class="form-label">Sex</label>
+              <select id="fSex" class="form-select">
+                <option value="">— Unknown —</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label">Spayed / Neutered</label>
+              <select id="fSpayed" class="form-select">
+                <option value="n">No</option>
+                <option value="y">Yes</option>
+              </select>
+            </div>
+            <div class="col-md-6" id="fSpayDateRow" style="display:none"><label class="form-label">Procedure
+                Date</label><input id="fSpayDate" type="date" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">Mother Name</label><input id="fMother" class="form-control">
+            </div>
+            <div class="col-md-6"><label class="form-label">Father Name</label><input id="fFather" class="form-control">
+            </div>
+            <div class="col-md-6"><label class="form-label">Next Rabies Vaccine</label><input id="fVaccine" type="date"
+                class="form-control">
+              <div class="form-text">Leave blank — set after first vaccination is recorded.</div>
+            </div>
+            <div class="col-md-6"><label class="form-label">Acquired By</label><input id="fAcqBy" class="form-control">
+            </div>
+            <div class="col-md-6"><label class="form-label">Color</label><input id="fColor" class="form-control"
+                placeholder="e.g. Color-Cinnamon, Color-Sable">
+            </div>
+            <div class="col-md-6"><label class="form-label">Description</label><input id="fDesc" class="form-control">
+            </div>
+            <div class="col-md-6"><label class="form-label">Location (optional)</label>
+              <select id="fAddrId" class="form-select">
+                <option value="">— Unassigned —</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label">Supplier (optional)</label>
+              <select id="fSupplierId" class="form-select">
+                <option value="">— Unknown —</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Photo</label>
+              <div class="photo-upload-zone" id="ferretPhotoZone"
+                onclick="document.getElementById('fPhotoFile').click()">
+                <i class="bi bi-camera text-muted fs-3 d-block mb-1"></i>
+                <span class="text-muted small">Click to upload or drag & drop — large photos are compressed automatically</span>
+                <div id="fPhotoPreview" class="mt-2"></div>
+              </div>
+              <input type="file" id="fPhotoFile" accept="image/*" style="display:none"
+                onchange="previewPhoto(this,'fPhotoPreview')">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitFerret()">Save Ferret</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health Event Modal -->
+  <div class="modal fade" id="healthModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="healthModalTitle">Record Health Event</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="heFerretId">
+          <input type="hidden" id="heEventId">
+          <div class="mb-2"><label class="form-label">Event Type</label>
+            <select id="heType" class="form-select" onchange="toggleWeightRow()">
+              <option value="weight">Weight Check</option>
+              <option value="bath">Bath</option>
+              <option value="nail_trim">Nail Trim</option>
+            </select>
+          </div>
+          <div id="heWeightRow" class="mb-2"><label class="form-label">Weight (g)</label>
+            <input id="heWeight" type="number" step="0.01" min="0" max="9999.99" class="form-control"
+              placeholder="e.g. 850.5">
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-7"><label class="form-label">Date</label><input id="heDate" type="date"
+                class="form-control"></div>
+            <div class="col-5"><label class="form-label">Time</label><input id="heTime" type="time"
+                class="form-control"></div>
+          </div>
+          <div class="mb-2"><label class="form-label">Notes</label><textarea id="heNotes" class="form-control"
+              rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitHealthEvent()">Record</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vaccination Modal -->
+  <div class="modal fade" id="vaccModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Record Vaccination</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="vFerretId">
+          <div class="mb-2"><label class="form-label">Vaccine Type</label>
+            <select id="vType" class="form-select" onchange="toggleRabiesDue()">
+              <option value="rabies">Rabies</option>
+              <option value="distemper">Distemper</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="mb-2"><label class="form-label">Vaccination Date</label><input id="vDate" type="date"
+              class="form-control"></div>
+          <div class="mb-2"><label class="form-label">Expiration Date</label><input id="vExpiry" type="date"
+              class="form-control"></div>
+          <div class="mb-2" id="vNextRabiesRow"><label class="form-label">Next Rabies Vaccine Due</label><input
+              id="vNextRabies" type="date" class="form-control"></div>
+          <div class="mb-2"><label class="form-label">Administered By <span class="text-danger">*</span></label>
+            <input id="vAdministeredBy" class="form-control" placeholder="Veterinarian or technician name">
+          </div>
+          <div class="mb-2"><label class="form-label">Notes</label><textarea id="vNotes" class="form-control"
+              rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitVaccination()">Record</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Litter Modal (ferret detail + global) -->
+  <div class="modal fade" id="litterModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Add Litter Record</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="litFerretId">
+          <div id="litJillRow" class="mb-2" style="display:none">
+            <label class="form-label">Jill (Mother) <span class="text-danger">*</span></label>
+            <select id="litJillSelect" class="form-select"></select>
+          </div>
+          <div class="row g-2">
+            <div class="col-6"><label class="form-label">Litter Date</label><input id="litDate" type="date"
+                class="form-control"></div>
+            <div class="col-6"><label class="form-label">Litter ID</label><input id="litId" class="form-control"
+                placeholder="Assigned automatically" readonly>
+              <div class="form-text">Next after the latest LIT####. Historical gaps are not reused.</div>
+            </div>
+            <div class="col-6"><label class="form-label">Kit Count</label><input id="litKits" type="number"
+                class="form-control" min="0"></div>
+            <div class="col-6"><label class="form-label">Stillborn</label><input id="litStillborn" type="number"
+                class="form-control" min="0" value="0"></div>
+            <div class="col-6"><label class="form-label">Father</label><input id="litFather" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Mother</label><input id="litMother" class="form-control"></div>
+            <div class="col-12"><label class="form-label">Anomalies / Notes</label><textarea id="litNotes"
+                class="form-control" rows="2"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitLitter()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Ferrets from Litter Modal -->
+  <div class="modal fade" id="createFromLitterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Create Ferrets from Litter</h3><button class="btn-close"
+            data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="cflLitterId">
+          <div id="cflLitterInfo" class="alert alert-info small mb-3"></div>
+          <div id="cflKitList"></div>
+          <button class="btn btn-outline-secondary btn-sm mt-2" onclick="addKitRow()"><i
+              class="bi bi-plus-lg me-1"></i>Add Kit</button>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-success" onclick="submitCreateFromLitter()"><i class="bi bi-egg me-1"></i>Create
+            Ferrets</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Move Location Modal -->
+  <div class="modal fade" id="moveModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Change Location</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="moveFerretId">
+          <div class="mb-3">
+            <label class="form-label">Date Moved</label>
+            <input id="moveDate" type="date" class="form-control" onchange="syncMoveLightFields()">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Select New Location</label>
+            <select id="moveAddrId" class="form-select"></select>
+            <div class="form-text">Cage position (Top/Middle/Bottom) is already set when the location is created — no need to re-select it here.</div>
+          </div>
+          <div class="mb-0" id="moveLightSection">
+            <label class="form-label">Light schedule</label>
+            <div class="small text-muted mb-2" id="moveLightCurrent">Loading current schedule…</div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="moveLightAction" id="moveLightKeep" value="keep" checked onchange="syncMoveLightFields()">
+              <label class="form-check-label" for="moveLightKeep">Keep the same schedule</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="moveLightAction" id="moveLightChange" value="change" onchange="syncMoveLightFields()">
+              <label class="form-check-label" for="moveLightChange">Change schedule</label>
+            </div>
+            <div id="moveLightChangeFields" class="border rounded-3 p-2 d-none">
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label small mb-1">New cycle</label>
+                  <select id="moveLightValue" class="form-select form-select-sm">
+                    <option value="0">Standard (Summer / 16-hour)</option>
+                    <option value="1">8-Hour (Winter)</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small mb-1">Since</label>
+                  <input id="moveLightSince" type="date" class="form-control form-control-sm">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitMove()">Move Ferret</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medical Info Modal -->
+  <div class="modal fade" id="medModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Update Medical Info</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="medFerretId">
+          <input type="hidden" id="medInfoId">
+          <h4 class="h6 fw-semibold mb-2">Spay / Castration</h4>
+          <div class="row g-2 mb-3">
+            <div class="col-6"><label class="form-label">Status</label>
+              <select id="medSpayed" class="form-select">
+                <option value="n">No</option>
+                <option value="y">Yes</option>
+              </select>
+            </div>
+            <div class="col-6"><label class="form-label">Spay / Castration Date</label><input id="medSpayDate"
+                type="date" class="form-control"></div>
+          </div>
+          <h4 class="h6 fw-semibold mb-2">Orders / Treatments</h4>
+          <div class="row g-2">
+            <div class="col-12"><label class="form-label">Orders</label><input id="medOrders" class="form-control">
+            </div>
+            <div class="col-12"><label class="form-label">Treatments</label><input id="medTreatments"
+                class="form-control"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitMedicalInfo()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Procedure Modal -->
+  <div class="modal fade" id="procedureModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Log Medical Procedure</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="procFerretId">
+          <div class="row g-2">
+            <div class="col-md-8"><label class="form-label">Procedure Name <span class="text-danger">*</span></label>
+              <input id="procName" class="form-control" placeholder="e.g. Adrenalectomy, Biopsy">
+            </div>
+            <div class="col-md-4"><label class="form-label">Date <span class="text-danger">*</span></label>
+              <input id="procDate" type="date" class="form-control">
+            </div>
+            <div class="col-12"><label class="form-label">Performed By</label><input id="procPerformedBy"
+                class="form-control"></div>
+            <div class="col-12"><label class="form-label">Notes / Details</label><textarea id="procNotes"
+                class="form-control" rows="3"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitProcedure()">Save Procedure</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exam / Health Check Note Modal -->
+  <div class="modal fade" id="examNoteModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Add Exam / Health Check Note</h3><button class="btn-close"
+            data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="enFerretId">
+          <div class="row g-2">
+            <div class="col-md-6"><label class="form-label">Exam Date <span class="text-danger">*</span></label>
+              <input id="enDate" type="date" class="form-control">
+            </div>
+            <div class="col-md-6"><label class="form-label">Weight (g)</label>
+              <input id="enWeight" type="number" class="form-control" placeholder="Optional">
+            </div>
+            <div class="col-12"><label class="form-label">Status</label>
+              <input id="enStatus" class="form-control" placeholder="e.g. BAR, Active">
+            </div>
+            <div class="col-12"><label class="form-label">Performed By</label>
+              <input id="enPerformedBy" class="form-control">
+            </div>
+            <div class="col-12"><label class="form-label">Notes</label>
+              <textarea id="enNotes" class="form-control" rows="5"
+                placeholder="Detailed exam / health check notes…"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitExamNote()">Save Note</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Veterinarian communication -->
+  <div class="modal fade" id="vetCommModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Veterinarian note</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="vcFerretId">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label class="form-label">Date <span class="text-danger">*</span></label>
+              <input id="vcDate" type="date" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">From</label>
+              <select id="vcSide" class="form-select">
+                <option value="staff">Staff</option>
+                <option value="veterinarian">Veterinarian</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Type</label>
+              <select id="vcKind" class="form-select">
+                <option value="note">Note</option>
+                <option value="question">Question</option>
+                <option value="recommendation">Recommendation</option>
+                <option value="prescription">Prescription</option>
+                <option value="follow_up">Follow-up</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Veterinarian name</label>
+              <input id="vcVetName" class="form-control" placeholder="Optional">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Follow up on</label>
+              <input id="vcFollowUp" type="date" class="form-control">
+              <div class="form-text">Leave blank if no follow-up is needed.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Message <span class="text-danger">*</span></label>
+              <textarea id="vcBody" class="form-control" rows="5"
+                placeholder="What we asked, what the vet said, or what to do next…"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitVetComm()">Save note</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Modal -->
+  <div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="userModalTitle">Add User</h3><button class="btn-close"
+            data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-6"><label class="form-label">Username <span class="text-danger">*</span></label><input
+                id="uUsername" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Full Name</label><input id="uFullName" class="form-control">
+            </div>
+            <div class="col-12"><label class="form-label">Email <span class="text-danger">*</span></label><input
+                id="uEmail" type="email" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Role <span class="text-danger">*</span></label>
+              <select id="uRole" class="form-select">
+                <option value="admin">Admin</option>
+                <option value="research">Research</option>
+                <option value="maternity">Animal Care Lead</option>
+                <option value="caretaker" selected>Caretaker</option>
+                <option value="cleaner">Cleaner</option>
+              </select>
+            </div>
+            <div class="col-6" id="uActiveWrap" style="display:none"><label class="form-label">Status</label>
+              <select id="uActive" class="form-select">
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+              </select>
+            </div>
+            <div class="col-12"><label class="form-label">Password <span id="uPassReq"
+                  class="text-danger">*</span></label>
+              <input id="uPassword" type="password" class="form-control" placeholder="Min 8 characters">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitUser()">Save User</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RFID Modal -->
+  <div class="modal fade" id="rfidModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Assign RFID Chip</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="rfidFerretId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">RFID Value <span class="text-danger">*</span></label>
+            <input id="rfidValue" class="form-control font-monospace" placeholder="e.g. 0A1B2C3D4E">
+            <div class="form-text">Scan the chip or enter the code manually. If this chip is currently assigned to
+              another ferret, it will be automatically unassigned from that ferret.</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Reason</label>
+            <select id="rfidReason" class="form-select">
+              <option value="">— Optional —</option>
+              <option value="new_chip">New chip</option>
+              <option value="replacement">Replacement (lost/damaged)</option>
+              <option value="reuse">Reuse from deceased ferret</option>
+            </select>
+          </div>
+          <div class="mb-2"><label class="form-label fw-semibold">Notes</label>
+            <input id="rfidNotes" class="form-control" placeholder="Optional notes">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitRfid()">Assign Chip</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tag for Distribution Modal -->
+  <div class="modal fade" id="tagDistModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-bookmark me-2"></i>Tag for Distribution</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="tagDistFerretId">
+          <div id="tagDistFerretName" class="alert alert-secondary py-2 small mb-3"></div>
+          <p class="small text-muted">They stay on site for care until you officially Distribute (offsite) or Assign to Research.</p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Destination type <span class="text-danger">*</span></label>
+            <select id="tagDistKind" class="form-select">
+              <option value="offsite">Offsite (sale / transfer out)</option>
+              <option value="research">Own research (in-house / contract study)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Going to</label>
+            <input id="tagDistDest" class="form-control" placeholder="University lab, partner facility, buyer name, …">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Tagged date <span class="text-danger">*</span></label>
+            <input id="tagDistDate" type="date" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea id="tagDistNotes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitDistributionTag()">Save Tag</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign to Research Modal -->
+  <div class="modal fade" id="assignResearchModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-clipboard2-pulse me-2"></i>Assign to Research</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="resFerretId">
+          <div id="resFerretName" class="alert alert-info py-2 small mb-3"></div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Study <span class="text-danger">*</span></label>
+            <select id="resStudyId" class="form-select"></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Cohort</label>
+            <select id="resCohort" class="form-select">
+              <option value="unassigned">Unassigned</option>
+              <option value="control">Control (may be reintegrated)</option>
+              <option value="experimental">Experimental</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Assigned Date <span class="text-danger">*</span></label>
+            <input id="resAssignedDate" type="date" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea id="resNotes" class="form-control" rows="2" placeholder="Protocol group, IACUC note, etc."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitAssignResearch()">Assign</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Research Modal -->
+  <div class="modal fade" id="endResearchModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">End Research Assignment</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="endResFerretId">
+          <div id="endResFerretName" class="alert alert-info py-2 small mb-3"></div>
+          <p class="small text-muted">To record euthanasia, use <strong>Mark Deceased</strong> instead. That closes the assignment as euthanized.</p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Outcome <span class="text-danger">*</span></label>
+            <select id="endResOutcome" class="form-select">
+              <option value="reintegrated">Reintegrate into colony</option>
+              <option value="given_away">Given away (then use Distribute if needed)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">End Date <span class="text-danger">*</span></label>
+            <input id="endResDate" type="date" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea id="endResNotes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitEndResearch()">End Assignment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Study Modal -->
+  <div class="modal fade" id="studyModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="studyModalTitle">New Study</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="studyId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Study name <span class="text-danger">*</span></label>
+            <input id="studyName" class="form-control" placeholder="e.g. UGA contract 2026-A">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Sponsor</label>
+            <input id="studySponsor" class="form-control" placeholder="University lab, contract sponsor, …">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Start date</label>
+              <input id="studyStart" type="date" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Planned end</label>
+              <input id="studyEnd" type="date" class="form-control">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Status</label>
+            <select id="studyStatus" class="form-select">
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea id="studyNotes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitStudy()">Save Study</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distribute Ferret Modal -->
+  <div class="modal fade" id="distributeModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-box-arrow-right me-2"></i>Distribute Ferret</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="distFerretId">
+          <div id="distFerretName" class="alert alert-info py-2 small mb-3"></div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Distributor <span class="text-danger">*</span></label>
+            <select id="distDistributorId" class="form-select"></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Distribution Date <span class="text-danger">*</span></label>
+            <input id="distDate" type="date" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Price (optional)</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input id="distPrice" type="number" step="0.01" min="0" class="form-control" placeholder="0.00">
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Notes (optional)</label>
+            <textarea id="distNotes" class="form-control" rows="2"
+              placeholder="Any relevant notes about this distribution…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitDistribute()"><i
+              class="bi bi-box-arrow-right me-1"></i>Distribute</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / Edit Distributor Modal -->
+  <div class="modal fade" id="distributorModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="distributorModalTitle">Add Distributor</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="distMgrId">
+          <div class="row g-2">
+            <div class="col-12">
+              <label class="form-label">Distributor Name <span class="text-danger">*</span></label>
+              <input id="distMgrName" class="form-control"
+                placeholder="e.g. BIOLOGICAL SCIENCES, University of Georgia">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Contact Info</label>
+              <input id="distMgrContact" class="form-control" placeholder="Contact person or email">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Address</label>
+              <input id="distMgrAddr" class="form-control" placeholder="e.g. Athens, GA">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Phone</label>
+              <input id="distMgrPhone" class="form-control" placeholder="e.g. 7065551234">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              <textarea id="distMgrNotes" class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitDistributor()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Add Address Modal -->
+  <div class="modal fade" id="addrModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Add Location</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2"><label class="form-label">Room ID <span class="text-danger">*</span></label><input
+              id="adRoom" type="number" class="form-control"></div>
+          <div class="mb-2"><label class="form-label">Room Name</label><input id="adRoomName" class="form-control"
+              placeholder="e.g. JB, Breeding, ISO"></div>
+          <div class="mb-2"><label class="form-label">Cage Address</label><input id="adCage" class="form-control"
+              maxlength="5" placeholder="e.g. A1"></div>
+          <div class="mb-2">
+            <label class="form-label">Position</label>
+            <div class="d-flex gap-3 flex-wrap mt-1">
+              <div class="form-check"><input class="form-check-input" type="radio" name="adPosition" id="adPosTop"
+                  value="Top"><label class="form-check-label" for="adPosTop">Top</label></div>
+              <div class="form-check"><input class="form-check-input" type="radio" name="adPosition" id="adPosMid"
+                  value="Middle"><label class="form-check-label" for="adPosMid">Middle</label></div>
+              <div class="form-check"><input class="form-check-input" type="radio" name="adPosition" id="adPosBot"
+                  value="Bottom"><label class="form-check-label" for="adPosBot">Bottom</label></div>
+              <div class="form-check"><input class="form-check-input" type="radio" name="adPosition" id="adPosNone"
+                  value="" checked><label class="form-check-label" for="adPosNone">None</label></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitAddress()">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supplier Modal -->
+  <div class="modal fade" id="supplierModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="supplierModalTitle">Add Supplier</h3><button class="btn-close"
+            data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="supId">
+          <div class="row g-2">
+            <div class="col-12"><label class="form-label">Supplier Name <span class="text-danger">*</span></label><input
+                id="supName" class="form-control"></div>
+            <div class="col-12"><label class="form-label">Contact Info</label><input id="supContact"
+                class="form-control" placeholder="Contact person or email"></div>
+            <div class="col-12"><label class="form-label">Address</label><input id="supAddr" class="form-control"></div>
+            <div class="col-12"><label class="form-label">Phone</label><input id="supPhone" class="form-control"
+                placeholder="e.g. 5551234567"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitSupplier()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mark Deceased Modal -->
+  <div class="modal fade" id="deceasedModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-heartbreak me-2 text-danger"></i>Mark as Deceased</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="deceasedFerretId">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Date of Death <span class="text-danger">*</span></label>
+              <input id="deceasedDate" type="date" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Cause of Death <span class="text-danger">*</span></label>
+              <select id="deceasedCause" class="form-select">
+                <option value="">— Select cause —</option>
+                <option value="Cancer">Cancer</option>
+                <option value="Euthanasia">Euthanasia</option>
+                <option value="Old Age">Old Age</option>
+                <option value="Unknown">Unknown</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Food / water access?</label>
+              <select id="deceasedFoodWater" class="form-select">
+                <option value="unknown">Unknown</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Any cage mates?</label>
+              <select id="deceasedCageMates" class="form-select" onchange="onCageMatesChange('deceased')">
+                <option value="unknown">Unknown</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Cage mates healthy?</label>
+              <select id="deceasedCageHealthy" class="form-select">
+                <option value="unknown">Unknown</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                <option value="na">N/A (no cage mates)</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Notes</label>
+              <textarea id="deceasedNotes" class="form-control" rows="3"
+                placeholder="Circumstances, findings, who found the animal…"></textarea>
+              <div class="form-text">Necropsy notes can be added later from the Medical tab, including by another user.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Photos <span class="text-muted fw-normal">(optional, multiple)</span></label>
+              <input type="file" id="deceasedPhotos" accept="image/*" class="form-control" multiple
+                onchange="previewDeathFiles(this,'deceasedPhotoPreview')">
+              <div id="deceasedPhotoPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger" onclick="submitMarkDeceased()"><i class="bi bi-heartbreak me-1"></i>Mark
+            Deceased</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Death Record Modal (admin / research / Animal Care Lead) -->
+  <div class="modal fade" id="editDeathModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Death Record</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editDeathFerretId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Date of Death <span class="text-danger">*</span></label>
+            <input id="editDeathDateField" type="date" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Cause of Death <span class="text-danger">*</span></label>
+            <select id="editDeathCause" class="form-select">
+              <option value="Cancer">Cancer</option>
+              <option value="Euthanasia">Euthanasia</option>
+              <option value="Old Age">Old Age</option>
+              <option value="Unknown">Unknown</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Food / water access?</label>
+            <select id="editDeathFoodWater" class="form-select">
+              <option value="unknown">Unknown</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Any cage mates?</label>
+            <select id="editDeathCageMates" class="form-select" onchange="onCageMatesChange('editDeath')">
+              <option value="unknown">Unknown</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Cage mates healthy?</label>
+            <select id="editDeathCageHealthy" class="form-select">
+              <option value="unknown">Unknown</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+              <option value="na">N/A (no cage mates)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitEditDeath()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Necropsy / Death Note Modal -->
+  <div class="modal fade" id="deathNoteModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-journal-plus me-2"></i>Add Note</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="deathNoteFerretId">
+          <input type="hidden" id="deathNoteId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Note type</label>
+            <select id="deathNoteType" class="form-select">
+              <option value="necropsy">Necropsy</option>
+              <option value="death">Death / circumstances</option>
+            </select>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Day and time</label>
+              <input type="datetime-local" id="deathNoteWhen" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Who did it</label>
+              <input type="text" id="deathNoteWho" class="form-control" list="deathNoteWhoList" placeholder="Name">
+              <datalist id="deathNoteWhoList"></datalist>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Notes <span class="text-danger">*</span></label>
+            <textarea id="deathNoteText" class="form-control" rows="5"
+              placeholder="Necropsy findings, histopath, additional circumstances…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitDeathNote()">Save Note</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Death / Necropsy Photo Modal -->
+  <div class="modal fade" id="deathPhotoModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-camera me-2"></i>Add Death / Necropsy Photo</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="deathPhotoFerretId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Photo type</label>
+            <select id="deathPhotoKind" class="form-select">
+              <option value="death">Death scene / animal</option>
+              <option value="necropsy">Necropsy</option>
+            </select>
+          </div>
+          <div class="d-flex gap-2 mb-3">
+            <button type="button" class="btn btn-outline-primary flex-fill" onclick="startDeathPhotoCamera()">
+              <i class="bi bi-camera fs-5 d-block mb-1"></i>
+              <span class="small">Take Photo</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary flex-fill" onclick="pickDeathPhotoFile()">
+              <i class="bi bi-folder2-open fs-5 d-block mb-1"></i>
+              <span class="small">Choose Files</span>
+            </button>
+          </div>
+          <div id="deathPhotoCameraBox" class="d-none text-center mb-2">
+            <video id="deathPhotoCameraVideo" autoplay playsinline muted></video>
+            <button type="button" class="btn btn-primary mt-2" onclick="captureDeathPhotoFrame()">
+              <i class="bi bi-camera me-1"></i>Capture
+            </button>
+            <div class="form-text">Stays on this page so Android does not drop the photo.</div>
+          </div>
+          <div id="deathPhotoPreviewBox" class="mt-2 text-center"></div>
+          <input type="file" id="deathPhotoFileInput" accept="image/*" multiple style="display:none"
+            onchange="previewDeathPhotoFiles(this)">
+          <div class="form-text">You can select several autopsy / death photos at once.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitDeathPhoto()">Upload Photos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo Upload Modal (for existing ferrets) -->
+  <div class="modal fade" id="photoModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Update Photo</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="photoFerretId">
+          <div class="d-flex gap-2 mb-3">
+            <button type="button" class="btn btn-outline-primary flex-fill" onclick="startPhotoCamera()">
+              <i class="bi bi-camera fs-5 d-block mb-1"></i>
+              <span class="small">Take Photo</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary flex-fill" onclick="pickPhotoFile()">
+              <i class="bi bi-folder2-open fs-5 d-block mb-1"></i>
+              <span class="small">Choose File</span>
+            </button>
+          </div>
+          <div id="photoCameraBox" class="d-none text-center mb-2">
+            <video id="photoCameraVideo" autoplay playsinline muted></video>
+            <button type="button" class="btn btn-primary mt-2" onclick="capturePhotoFrame()">
+              <i class="bi bi-camera me-1"></i>Capture
+            </button>
+            <div class="form-text">Stays on this page so Android does not drop the photo.</div>
+          </div>
+          <div id="photoPreviewBox" class="mt-2 text-center"></div>
+          <input type="file" id="photoCameraInput" accept="image/*" capture="environment" style="display:none"
+            onchange="previewPhoto(this,'photoPreviewBox')">
+          <input type="file" id="photoFileInput" accept="image/*" style="display:none"
+            onchange="previewPhoto(this,'photoPreviewBox')">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitPhoto()">Upload Photo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reproductive Event Modal -->
+  <div class="modal fade" id="reproModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-heart me-2 text-danger"></i>Record Reproductive Event</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="reproFerretId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Event Type <span class="text-danger">*</span></label>
+            <select id="reproType" class="form-select" onchange="onReproTypeChange()">
+              <option value="estrus">In Estrus — female has entered estrus cycle</option>
+              <option value="mated">Mated — female was paired with a male</option>
+              <option value="littered">Littered — litter was born</option>
+              <option value="weaned">Weaned — kits weaned (→ back to baseline)</option>
+              <option value="no_litter">No Litter — mated but no birth occurred (→ back to baseline)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+            <input id="reproDate" type="date" class="form-control">
+          </div>
+          <div class="mb-3" id="reproPartnerRow" style="display:none">
+            <label class="form-label fw-semibold">Male Partner</label>
+            <select id="reproPartnerSelect" class="form-select" onchange="onReproPartnerChange()">
+              <option value="">— Unknown / Not recorded —</option>
+            </select>
+            <div class="form-text">Select the male ferret used for mating, if known. Expected offspring CoI updates when a male is chosen.</div>
+            <div id="reproPartnerCoi" class="mt-1"></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Photo (optional)</label>
+            <div class="form-text mb-1">Attach a photo for this event — e.g. a litter photo.</div>
+            <input type="file" id="reproPhotoFile" accept="image/*" class="form-control"
+              onchange="previewPhoto(this,'reproPhotoPreview')">
+            <div id="reproPhotoPreview" class="mt-2"></div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea id="reproNotes" class="form-control" rows="3"
+              placeholder="Optional: observations, vulva score, behavior notes…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger" onclick="submitReproEvent()"><i class="bi bi-heart me-1"></i>Record
+            Event</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kit Death Modal (pre-ID kit deaths) -->
+  <div class="modal fade" id="kitDeathModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-heartbreak me-2 text-danger"></i>Log Kit Death</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="kdLitterId">
+          <p class="small text-muted">Log a kit that was born alive and later died. Stillborn kits belong on the litter record, not here.</p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Date of Death <span class="text-danger">*</span></label>
+            <input id="kdDate" type="date" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Cause <span class="text-danger">*</span></label>
+            <select id="kdCause" class="form-select">
+              <option value="mother_ate">Mother ate / cannibalized</option>
+              <option value="fell_from_cage">Fell from cage</option>
+              <option value="crushed">Crushed / overlain</option>
+              <option value="failure_to_thrive">Failure to thrive</option>
+              <option value="unknown">Unknown</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea id="kdNotes" class="form-control" rows="2" placeholder="Optional details…"></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Treatments Attempted</label>
+            <textarea id="kdTreatments" class="form-control" rows="2"
+              placeholder="Any intervention attempted before death, if applicable…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger" onclick="submitKitDeath()"><i class="bi bi-heartbreak me-1"></i>Log Death</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Litter Care Event Modal (maternity log) -->
+  <div class="modal fade" id="careEventModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-clipboard2-pulse me-2 text-primary"></i>Log Litter Care Event</h3>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="ceLitterId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Event Type <span class="text-danger">*</span></label>
+            <select id="ceType" class="form-select" onchange="onCareEventTypeChange()">
+              <option value="weight">Kit Weighing</option>
+              <option value="nest_change">Nest Box Change</option>
+              <option value="supplemental_feeding">Supplemental Feeding</option>
+              <option value="feeding_check">Feeding Check</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+            <input id="ceDate" type="date" class="form-control">
+          </div>
+          <div class="mb-3" id="ceWeightRow">
+            <label class="form-label fw-semibold">Weight (g)</label>
+            <input id="ceWeight" type="number" class="form-control" placeholder="Litter or average kit weight">
+          </div>
+          <div class="mb-3" id="ceFeedTypeRow" style="display:none">
+            <label class="form-label fw-semibold">Feed Type</label>
+            <input id="ceFeedType" class="form-control" placeholder="e.g. Esbilac, goat milk">
+          </div>
+          <div class="mb-3" id="ceKitCountRow">
+            <label class="form-label fw-semibold">Kit Count</label>
+            <input id="ceKitCount" type="number" class="form-control" placeholder="How many kits this applied to">
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea id="ceNotes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitCareEvent()"><i class="bi bi-plus-lg me-1"></i>Log Event</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Litter Detail Modal (Kit Deaths + Care Log) -->
+  <div class="modal fade" id="litterDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="bi bi-egg me-2"></i>Litter Care Details</h3>
+          <button class="btn btn-sm btn-outline-secondary ms-auto me-2" onclick="printLitterCareLog()" title="Print this care log">
+            <i class="bi bi-printer me-1"></i>Print
+          </button>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="ldLitterId">
+          <div id="ldSummary" class="alert alert-info py-2 small mb-3"></div>
+          <div id="ldMaternityActions"></div>
+
+          <div class="d-flex align-items-center mb-2">
+            <h6 class="fw-semibold mb-0"><i class="bi bi-heartbreak me-1 text-danger"></i>Kit Deaths (born alive, pre-ID)</h6>
+            <button id="ldAddKitDeathBtn" class="btn btn-sm btn-outline-danger ms-auto" onclick="openKitDeathModal()">
+              <i class="bi bi-plus-lg me-1"></i>Log Kit Death</button>
+          </div>
+          <div class="table-responsive mb-4">
+            <table class="table table-sm">
+              <thead><tr><th>Date</th><th>Cause</th><th>Notes</th><th>Treatments</th><th>By</th><th></th></tr></thead>
+              <tbody id="ldKitDeathTable"></tbody>
+            </table>
+          </div>
+
+          <div class="d-flex align-items-center mb-2">
+            <h6 class="fw-semibold mb-0"><i class="bi bi-clipboard2-pulse me-1 text-primary"></i>Care Log (Weighing, Nest, Feeding)</h6>
+            <button id="ldAddCareEventBtn" class="btn btn-sm btn-primary ms-auto" onclick="openCareEventModal()">
+              <i class="bi bi-plus-lg me-1"></i>Log Care Event</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead><tr><th>Date</th><th>Type</th><th>Weight</th><th>Kits</th><th>Feed Type</th><th>Notes</th><th>By</th><th></th></tr></thead>
+              <tbody id="ldCareEventTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pulled Date Modal (mating → date female separated from male) -->
+  <div class="modal fade" id="pulledDateModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Date Pulled From Male</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="pdFerretId">
+          <input type="hidden" id="pdEventId">
+          <p class="text-muted small">Used with the mating date to estimate a litter date range (~6 weeks gestation from each).</p>
+          <label class="form-label">Date Pulled</label>
+          <input id="pdDate" type="date" class="form-control">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitPulledDate()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Care Schedule Settings Modal -->
+  <div class="modal fade" id="careScheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Care Schedule Settings</h3><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label small fw-semibold">Nail Trim Interval (days)</label>
+            <input id="csNailInterval" type="number" min="1" class="form-control"></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Weight Warning — Yellow (days)</label>
+            <input id="csWeightWarn" type="number" min="1" class="form-control"></div>
+          <div class="mb-2"><label class="form-label small fw-semibold">Weight Critical — Red (days)</label>
+            <input id="csWeightCritical" type="number" min="1" class="form-control"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" onclick="submitCareSchedule()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+  <!-- Mating Modal -->
+<div class="modal fade" id="matingModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="bi bi-heart-fill me-2 text-danger"></i>Record Mating</h3>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="matingFerretId">
+        <div class="mb-3">
+          <label class="form-label fw-semibold" id="matingPartnerLabel">Partner</label>
+          <select id="matingPartnerSelect" class="form-select" onchange="onMatingPartnerChange()"><option value="">— Select —</option></select>
+          <div class="form-text">Expected offspring CoI is the inbreeding coefficient of kits from this pairing.</div>
+          <div id="matingPartnerCoi" class="mt-1"></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+          <input id="matingDate" type="date" class="form-control">
+        </div>
+        <div class="mb-2">
+          <label class="form-label fw-semibold">Notes</label>
+          <textarea id="matingNotes" class="form-control" rows="3" placeholder="Optional notes…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-danger" onclick="submitMatingRecord()"><i class="bi bi-heart-fill me-1"></i>Record Mating</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Edit / set partner on an existing mated event -->
+<div class="modal fade" id="editPartnerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Mating Partner</h3>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="epFerretId">
+        <input type="hidden" id="epEventId">
+        <p class="small text-muted">Set or change the male used for this mating. The pairing’s expected offspring CoI is shown after you pick a hob.</p>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Male Partner</label>
+          <select id="epPartnerSelect" class="form-select" onchange="onEditPartnerChange()">
+            <option value="">— Unknown / Not recorded —</option>
+          </select>
+          <div id="epPartnerCoi" class="mt-1"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="submitEditPartner()"><i class="bi bi-check-lg me-1"></i>Save Partner</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="bugReportModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="bi bi-bug me-2"></i>Report a problem</h3>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">Sends a data report to the admin — what is broken, what record is wrong, or what needs to change.</p>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Category</label>
+          <select id="bugCategory" class="form-select">
+            <option value="bug">Bug (something is broken)</option>
+            <option value="data">Data correction (a record is wrong)</option>
+            <option value="change">Change request</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Short title <span class="text-danger">*</span></label>
+          <input id="bugTitle" class="form-control" maxlength="200" placeholder="e.g. Wrong room on Daisy's card">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">What needs to change <span class="text-danger">*</span></label>
+          <textarea id="bugDescription" class="form-control" rows="4" maxlength="8000" placeholder="Describe the bug or the change. Include animal names if a record is wrong."></textarea>
+        </div>
+        <div id="bugRelatedFerretWrap" class="form-check mb-3 d-none">
+          <input class="form-check-input" type="checkbox" id="bugIncludeFerret" checked>
+          <label class="form-check-label" id="bugIncludeFerretLabel" for="bugIncludeFerret">This is about the ferret I am viewing</label>
+        </div>
+        <div class="small text-muted">
+          Included automatically: current page, your name and role, app version, and browser. The admin sees this with the report.
+        </div>
+        <div id="bugReportErr" class="alert alert-danger py-2 small mt-3 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="submitBugReport()"><i class="bi bi-send me-1"></i>Send to admin</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="bugReportDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="bugDetailTitle">Report</h3>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="bugDetailBody"></div>
+      <div class="modal-footer flex-wrap gap-2">
+        <select id="bugDetailStatus" class="form-select" style="max-width:180px">
+          <option value="open">Open</option>
+          <option value="in_progress">In progress</option>
+          <option value="resolved">Resolved</option>
+          <option value="wont_fix">Won't fix</option>
+        </select>
+        <button class="btn btn-primary" onclick="saveBugReportStatus()"><i class="bi bi-check2 me-1"></i>Update status</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <footer>
+      <p>© <span id="year"></span> Animal Colony Manager · public demo · MIT License · <span id="app-version">v2.2-demo</span></p>
+      <p id="lastModified"></p>
+  </footer>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/seed.js"></script>
+  <script src="js/genetics.js"></script>
+  <script src="js/mock-api.js"></script>
+  <script src="js/app-core.js"></script>
+  <script src="js/app-ferrets.js"></script>
+  <script src="js/app-medical.js"></script>
+  <script src="js/app-admin.js"></script>
+  <script src="js/app-stats.js"></script>
+  <script src="js/app-reports.js"></script>
+  <script src="js/app-batch.js"></script>
+  <script src="js/darkMode.js"></script>
+  <script src="js/burger.js"></script>
+  <script src="js/getDates.js"></script>
+  <script src="js/app-version.js"></script>
+</body>
+
+</html>

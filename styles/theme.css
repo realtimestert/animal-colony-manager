@@ -1,0 +1,14 @@
+/* SanusBio | styles/theme.css
+   Theme-toggle control. Page palette stays in styles/style.css. */
+
+#darkModeToggle.dark-mode-btn {
+  border: 1px solid #8aa8a1 !important;
+  color: #8aa8a1 !important;
+  background: transparent !important;
+}
+
+#darkModeToggle.dark-mode-btn:hover,
+#darkModeToggle.dark-mode-btn:focus {
+  background: #8aa8a1 !important;
+  color: #122754 !important;
+}
