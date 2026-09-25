@@ -23,3 +23,12 @@
   background: #0b1733;
   color: #cbcbd4;
 }
+
+/* Public demo never shows the login card. mock-api + bootDemo call initApp. */
+#loginWrap {
+  display: none !important;
+}
+#app {
+  display: flex !important;
+  min-height: 100vh;
+}
