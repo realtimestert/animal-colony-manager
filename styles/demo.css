@@ -1,0 +1,15 @@
+/* Demo-only chrome. Does not change the colony UI theme. */
+.demo-banner {
+  background: #cbcbd4;
+  border: 1px solid #8aa8a1;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+[data-theme="dark"] .demo-banner,
+[data-bs-theme="dark"] .demo-banner {
+  background: #1b2a4a;
+  color: #cbcbd4;
+  border-color: #8aa8a1;
+}
