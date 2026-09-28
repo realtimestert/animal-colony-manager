@@ -43,4 +43,11 @@ Staged litters: LIT0001 nursing (2 days), LIT0002 soft-food (21 days), LIT0003 w
 
 ## License
 
+Proprietary. You may look at this public demo and click through the
+GitHub Pages site. You may not copy, reuse, or redistribute the code
+without written permission from SanusBio Farms and Research.
+See LICENSE.
+
+## License
+
 MIT. This demo is source-available so people can see the work. It is **not** the production farm database and does not include live animal records, import scripts, or operational host configuration.
